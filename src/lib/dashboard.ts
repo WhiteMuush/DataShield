@@ -60,8 +60,9 @@ export async function getDashboardData(companyId: string) {
       orderBy: { createdAt: "desc" },
       take: 30,
       select: {
-        id: true, severity: true, status: true, message: true, createdAt: true,
-        employee: { select: { firstName: true, lastName: true } },
+        id: true, severity: true, status: true, createdAt: true,
+        employee: { select: { firstName: true, lastName: true, department: true } },
+        breach: { select: { name: true } },
       },
     }),
     prisma.employee.findMany({
@@ -106,9 +107,10 @@ export async function getDashboardData(companyId: string) {
       id: a.id,
       severity: a.severity,
       status: a.status,
-      message: a.message,
       createdAt: a.createdAt.toISOString(),
       employeeName: a.employee ? `${a.employee.firstName} ${a.employee.lastName}` : null,
+      department: a.employee?.department ?? null,
+      breachName: a.breach?.name ?? null,
     })),
   }
 }

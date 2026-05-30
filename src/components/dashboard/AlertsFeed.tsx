@@ -9,16 +9,24 @@ type Alert = {
   id: string
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
   status: "OPEN" | "ACKNOWLEDGED" | "RESOLVED"
-  message: string
   createdAt: string
   employeeName: string | null
+  department: string | null
+  breachName: string | null
 }
 
-const SEVERITY_STYLES: Record<string, string> = {
-  CRITICAL: "bg-severity-critical/10 text-severity-critical border-severity-critical/20",
-  HIGH:     "bg-severity-high/10 text-severity-high border-severity-high/20",
-  MEDIUM:   "bg-severity-medium/10 text-severity-medium border-severity-medium/20",
-  LOW:      "bg-severity-low/10 text-severity-low border-severity-low/20",
+const SEVERITY_BORDER: Record<string, string> = {
+  CRITICAL: "border-l-severity-critical",
+  HIGH:     "border-l-severity-high",
+  MEDIUM:   "border-l-severity-medium",
+  LOW:      "border-l-severity-low",
+}
+
+const SEVERITY_DOT: Record<string, string> = {
+  CRITICAL: "bg-severity-critical",
+  HIGH:     "bg-severity-high",
+  MEDIUM:   "bg-severity-medium",
+  LOW:      "bg-severity-low",
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -67,27 +75,32 @@ export function AlertsFeed({ data }: { data: Alert[] }) {
           <p className="text-sm text-muted-foreground">Aucune alerte</p>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5">
           {filtered.map((alert) => (
-            <div key={alert.id} className={cn("rounded-lg border p-3", SEVERITY_STYLES[alert.severity])}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider">{alert.severity}</span>
-                    {alert.employeeName && (
-                      <span className="text-[10px] text-muted-foreground">· {alert.employeeName}</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-foreground leading-relaxed">{alert.message}</p>
-                </div>
-                <div className="shrink-0 flex flex-col items-end gap-1">
-                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", STATUS_STYLES[alert.status])}>
-                    {STATUS_LABELS[alert.status]}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(alert.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
+            <div
+              key={alert.id}
+              className={cn(
+                "flex items-center gap-3 rounded-lg border border-border border-l-2 bg-background px-3 py-2.5",
+                SEVERITY_BORDER[alert.severity]
+              )}
+            >
+              <div className={cn("size-1.5 shrink-0 rounded-full", SEVERITY_DOT[alert.severity])} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">
+                  {alert.employeeName ?? "—"}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {alert.breachName ?? alert.severity}
+                  {alert.department && <span className="text-muted-foreground/60"> · {alert.department}</span>}
+                </p>
+              </div>
+              <div className="shrink-0 flex flex-col items-end gap-1">
+                <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", STATUS_STYLES[alert.status])}>
+                  {STATUS_LABELS[alert.status]}
+                </span>
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {new Date(alert.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                </span>
               </div>
             </div>
           ))}
