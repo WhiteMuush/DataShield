@@ -26,6 +26,7 @@ export default async function DashboardPage() {
       defaultSize: { w: 12, h: 3 },
       defaultPosition: { x: 0, y: 0 },
       minSize: { w: 6, h: 3 },
+      centerContent: true,
       content: <StatsRow {...data} />,
     },
     {

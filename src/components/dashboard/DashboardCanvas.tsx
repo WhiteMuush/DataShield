@@ -20,6 +20,7 @@ export type WidgetEntry = {
   defaultSize: { w: number; h: number }
   defaultPosition?: { x: number; y: number }
   minSize: { w: number; h: number }
+  centerContent?: boolean
 }
 
 function buildDefaultLayout(widgets: WidgetEntry[]): GridItemLayout[] {
@@ -315,7 +316,7 @@ export function DashboardCanvas({
                       onChange={(t) => setTitle(w.instanceId, t)}
                     />
                   )}
-                  <div className="h-full">
+                  <div className={cn("h-full", w.centerContent && "flex items-center")}>
                     {w.content}
                   </div>
                 </div>
