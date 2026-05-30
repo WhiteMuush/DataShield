@@ -235,26 +235,17 @@ export function DashboardCanvas({
     return editing || m?.visible !== false
   })
 
-  // Measures the natural viewport width (ignoring canvas expansion)
-  const viewportRef = useRef<HTMLDivElement>(null)
-  const [viewportWidth, setViewportWidth] = useState(0)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const [gridWidth, setGridWidth] = useState(0)
 
   useEffect(() => {
-    const el = viewportRef.current
+    const el = gridRef.current
     if (!el) return
-    setViewportWidth(el.clientWidth)
-    const ro = new ResizeObserver(() => setViewportWidth(el.clientWidth))
+    setGridWidth(el.clientWidth)
+    const ro = new ResizeObserver(() => setGridWidth(el.clientWidth))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-
-  const canvasWidth = viewportWidth > 0 ? Math.round(viewportWidth / zoom) : 0
-  const effectiveCols = {
-    lg: Math.round(12 / zoom),
-    md: Math.round(12 / zoom),
-    sm: Math.round(6 / zoom),
-    xs: 4,
-  }
 
   return (
     <DashboardEditContext.Provider value={editing}>
@@ -313,16 +304,20 @@ export function DashboardCanvas({
             </div>
           )}
 
-          <div ref={viewportRef} className="overflow-x-auto">
           <div
-            style={{ width: canvasWidth || "100%" }}
+            ref={gridRef}
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
+              width: zoom < 1 ? `${100 / zoom}%` : "100%",
+            }}
             className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}
           >
-          {canvasWidth > 0 && <ResponsiveGridLayout
+          {gridWidth > 0 && <ResponsiveGridLayout
             className="layout"
-            width={canvasWidth}
+            width={gridWidth}
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-            cols={effectiveCols}
+            cols={{ lg: 12, md: 12, sm: 6, xs: 4 }}
             rowHeight={50}
             isDraggable={editing}
             isResizable={editing}
@@ -370,7 +365,6 @@ export function DashboardCanvas({
               )
             })}
           </ResponsiveGridLayout>}
-          </div>
           </div>
         </div>
       </DashboardConfigContext.Provider>
