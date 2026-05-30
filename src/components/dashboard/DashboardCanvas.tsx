@@ -305,7 +305,15 @@ export function DashboardCanvas({
             </div>
           )}
 
-          <div ref={viewportRef}>
+          <div
+            ref={viewportRef}
+            style={{
+              backgroundImage: "radial-gradient(circle, oklch(var(--border)) 1px, transparent 1px)",
+              backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+              margin: "-24px",
+              padding: "24px",
+            }}
+          >
           <div
             style={{
               transform: `scale(${zoom})`,
