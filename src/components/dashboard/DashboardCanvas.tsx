@@ -276,7 +276,7 @@ export function DashboardCanvas({
             </div>
           )}
 
-          <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden")}>
+          <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none")}>
           {gridWidth > 0 && <ResponsiveGridLayout
             className="layout"
             width={gridWidth}
