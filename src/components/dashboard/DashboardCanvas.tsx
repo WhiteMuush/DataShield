@@ -277,8 +277,7 @@ export function DashboardCanvas({
             </div>
           )}
 
-          <div ref={gridRef} className={cn("relative", !editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}>
-            {!editing && <div className="absolute inset-0 z-10" />}
+          <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}>
           {gridWidth > 0 && <ResponsiveGridLayout
             className="layout"
             width={gridWidth}
@@ -321,7 +320,10 @@ export function DashboardCanvas({
                       onChange={(t) => setTitle(w.instanceId, t)}
                     />
                   )}
-                  <div className={cn("h-full", w.centerContent && "flex items-center [&>*]:w-full")}>
+                  <div
+                    className={cn("h-full", w.centerContent && "flex items-center [&>*]:w-full")}
+                    onMouseDown={!editing ? (e) => e.stopPropagation() : undefined}
+                  >
                     {w.content}
                   </div>
                 </div>
