@@ -51,7 +51,16 @@ function buildDefaultMeta(widgets: WidgetEntry[]): WidgetMeta[] {
 function mergeLayout(saved: GridItemLayout[], widgets: WidgetEntry[]): GridItemLayout[] {
   return widgets.map((w) => {
     const s = saved.find((l) => l.i === w.instanceId)
-    return s ?? {
+    if (s) {
+      return {
+        ...s,
+        w: Math.max(s.w, w.minSize.w),
+        h: Math.max(s.h, w.minSize.h),
+        minW: w.minSize.w,
+        minH: w.minSize.h,
+      }
+    }
+    return {
       i: w.instanceId,
       x: 0,
       y: Infinity,
@@ -296,8 +305,8 @@ export function DashboardCanvas({
                   key={w.instanceId}
                   data-grid={item}
                   className={cn(
-                    "relative h-full overflow-hidden rounded-xl",
-                    editing && "cursor-grab outline outline-2 outline-primary/30 active:cursor-grabbing"
+                    "relative h-full",
+                    editing && "cursor-grab rounded-xl outline outline-2 outline-primary/30 active:cursor-grabbing"
                   )}
                 >
                   {editing && (
