@@ -6,7 +6,7 @@ import { StatsRow } from "@/components/dashboard/StatsRow"
 import { TrendChart } from "@/components/dashboard/TrendChart"
 import { DataTypeBreakdown } from "@/components/dashboard/DataTypeBreakdown"
 import { BreachSourcesList } from "@/components/dashboard/BreachSourcesList"
-import { SeverityDonut } from "@/components/dashboard/SeverityDonut"
+import { TopRiskyEmployees } from "@/components/dashboard/TopRiskyEmployees"
 import { DepartmentRisk } from "@/components/dashboard/DepartmentRisk"
 import { AlertsFeed } from "@/components/dashboard/AlertsFeed"
 import type { SavedDashboardConfig } from "@/types/dashboard"
@@ -45,20 +45,20 @@ export default async function DashboardPage() {
       content: <TrendChart data={data.trendData} />,
     },
     {
-      instanceId: "severity-donut",
-      type: "severity-donut",
-      defaultTitle: "Alert Severity",
-      defaultSize: { w: 3, h: 6 },
+      instanceId: "top-risky-employees",
+      type: "top-risky-employees",
+      defaultTitle: "Top Employees at Risk",
+      defaultSize: { w: 4, h: 6 },
       defaultPosition: { x: 5, y: 4 },
-      minSize: { w: 2, h: 4 },
-      content: <SeverityDonut data={data.alertSeverity} />,
+      minSize: { w: 3, h: 4 },
+      content: <TopRiskyEmployees data={data.topRiskyEmployees} />,
     },
     {
       instanceId: "breach-sources",
       type: "breach-sources",
       defaultTitle: "Breach Sources",
       defaultSize: { w: 4, h: 6 },
-      defaultPosition: { x: 8, y: 4 },
+      defaultPosition: { x: 9, y: 4 },
       minSize: { w: 3, h: 4 },
       content: <BreachSourcesList data={data.breachSources} />,
     },

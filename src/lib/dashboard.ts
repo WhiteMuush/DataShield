@@ -23,6 +23,7 @@ export async function getDashboardData(companyId: string) {
     breachSources,
     departmentEmployees,
     recentAlerts,
+    topRiskyEmployees,
   ] = await Promise.all([
     prisma.employee.count({ where: { companyId } }),
     prisma.employee.count({ where: { companyId, breachRecords: { some: {} } } }),
@@ -63,6 +64,14 @@ export async function getDashboardData(companyId: string) {
         employee: { select: { firstName: true, lastName: true } },
       },
     }),
+    prisma.employee.findMany({
+      where: { companyId, breachRecords: { some: {} } },
+      select: {
+        id: true, firstName: true, lastName: true, department: true,
+        breachRecords: { select: { detectedAt: true, exposedData: true } },
+        alerts: { where: { status: "OPEN" }, select: { severity: true } },
+      },
+    }),
   ])
 
   const riskScore = calculateRiskScore({
@@ -92,6 +101,7 @@ export async function getDashboardData(companyId: string) {
       affectedEmployees: new Set(b.records.map((r) => r.employeeId)).size,
     })),
     departmentRisk: buildDepartmentRisk(departmentEmployees),
+    topRiskyEmployees: buildTopRiskyEmployees(topRiskyEmployees, thirtyDaysAgo),
     recentAlerts: recentAlerts.map((a) => ({
       id: a.id,
       severity: a.severity,
@@ -119,6 +129,42 @@ function buildTrendData(records: { detectedAt: Date }[]) {
   })
 
   return Object.entries(months).map(([month, count]) => ({ month, count }))
+}
+
+type EmployeeRaw = {
+  id: string
+  firstName: string
+  lastName: string
+  department: string | null
+  breachRecords: { detectedAt: Date; exposedData: string[] }[]
+  alerts: { severity: string }[]
+}
+
+function buildTopRiskyEmployees(employees: EmployeeRaw[], thirtyDaysAgo: Date) {
+  return employees
+    .map((e) => {
+      const recentBreaches = e.breachRecords.filter((r) => r.detectedAt >= thirtyDaysAgo).length
+      const score = calculateRiskScore({
+        totalEmployees: 1,
+        compromisedEmployees: 1,
+        criticalAlerts: e.alerts.filter((a) => a.severity === "CRITICAL").length,
+        highAlerts: e.alerts.filter((a) => a.severity === "HIGH").length,
+        mediumAlerts: e.alerts.filter((a) => a.severity === "MEDIUM").length,
+        recentBreaches,
+      })
+      return {
+        id: e.id,
+        name: `${e.firstName} ${e.lastName}`,
+        department: e.department,
+        breachCount: e.breachRecords.length,
+        openAlerts: e.alerts.length,
+        riskScore: score,
+        riskLevel: getRiskLevel(score).label,
+        riskVariant: getRiskLevel(score).variant,
+      }
+    })
+    .sort((a, b) => b.riskScore - a.riskScore)
+    .slice(0, 8)
 }
 
 function buildDepartmentRisk(employees: { department: string | null; breachRecords: { id: string }[] }[]) {
