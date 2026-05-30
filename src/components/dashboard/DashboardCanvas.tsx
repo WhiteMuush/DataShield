@@ -235,17 +235,26 @@ export function DashboardCanvas({
     return editing || m?.visible !== false
   })
 
-  const gridRef = useRef<HTMLDivElement>(null)
-  const [gridWidth, setGridWidth] = useState(0)
+  // Measures the natural viewport width (ignoring canvas expansion)
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const [viewportWidth, setViewportWidth] = useState(0)
 
   useEffect(() => {
-    const el = gridRef.current
+    const el = viewportRef.current
     if (!el) return
-    setGridWidth(el.clientWidth)
-    const ro = new ResizeObserver(() => setGridWidth(el.clientWidth))
+    setViewportWidth(el.clientWidth)
+    const ro = new ResizeObserver(() => setViewportWidth(el.clientWidth))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  const canvasWidth = viewportWidth > 0 ? Math.round(viewportWidth / zoom) : 0
+  const effectiveCols = {
+    lg: Math.round(12 / zoom),
+    md: Math.round(12 / zoom),
+    sm: Math.round(6 / zoom),
+    xs: 4,
+  }
 
   return (
     <DashboardEditContext.Provider value={editing}>
@@ -304,16 +313,16 @@ export function DashboardCanvas({
             </div>
           )}
 
+          <div ref={viewportRef} className="overflow-x-auto">
           <div
-            ref={gridRef}
-            style={{ zoom }}
+            style={{ width: canvasWidth || "100%" }}
             className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}
           >
-          {gridWidth > 0 && <ResponsiveGridLayout
+          {canvasWidth > 0 && <ResponsiveGridLayout
             className="layout"
-            width={gridWidth}
+            width={canvasWidth}
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-            cols={{ lg: 12, md: 12, sm: 6, xs: 4 }}
+            cols={effectiveCols}
             rowHeight={50}
             isDraggable={editing}
             isResizable={editing}
@@ -361,6 +370,7 @@ export function DashboardCanvas({
               )
             })}
           </ResponsiveGridLayout>}
+          </div>
           </div>
         </div>
       </DashboardConfigContext.Provider>
