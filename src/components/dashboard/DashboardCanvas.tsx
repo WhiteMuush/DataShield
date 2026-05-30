@@ -288,7 +288,7 @@ export function DashboardCanvas({
             isDraggable={editing}
             isResizable={editing}
             onLayoutChange={onLayoutChange}
-            onDragStart={(_l, item) => setDraggingId(item.i)}
+            onDragStart={(_l: unknown, item: ReactGridLayoutItem) => setDraggingId(item.i)}
             onDragStop={() => setDraggingId(null)}
             margin={[16, 16]}
             containerPadding={[0, 0]}
