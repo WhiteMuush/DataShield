@@ -22,6 +22,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { GripVertical, Eye, EyeOff, Settings2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { DashboardEditContext } from "@/contexts/DashboardEditContext"
 
 export type Section = {
   id: string
@@ -133,6 +134,7 @@ export function DashboardCanvas({ sections }: { sections: Section[] }) {
   const activeSection = sections.find((s) => s.id === activeId)
 
   return (
+    <DashboardEditContext.Provider value={editing}>
     <div className={cn("transition-all duration-200", editing && "px-10")}>
       <div className="mb-4 flex justify-end">
         {editing ? (
@@ -180,5 +182,6 @@ export function DashboardCanvas({ sections }: { sections: Section[] }) {
         </DragOverlay>
       </DndContext>
     </div>
+    </DashboardEditContext.Provider>
   )
 }
