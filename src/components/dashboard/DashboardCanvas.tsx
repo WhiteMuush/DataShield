@@ -240,6 +240,31 @@ export function DashboardCanvas({
             )}
           </div>
 
+          {editing && (
+            <div className="mb-4 flex flex-wrap gap-2 rounded-xl border border-border bg-card p-3">
+              <p className="w-full text-xs font-medium text-muted-foreground mb-1">Widget visibility</p>
+              {widgets.map((w) => {
+                const m = meta.find((m) => m.instanceId === w.instanceId)
+                const visible = m?.visible !== false
+                const title = getTitle(w.instanceId, w.defaultTitle)
+                return (
+                  <button
+                    key={w.instanceId}
+                    onClick={() => toggleVisible(w.instanceId)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      visible
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {visible ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
+                    {title}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden")}>
           {gridWidth > 0 && <ResponsiveGridLayout
@@ -266,32 +291,20 @@ export function DashboardCanvas({
                 minH: w.minSize.h,
               }
               const title = getTitle(w.instanceId, w.defaultTitle)
-              const isVisible = meta.find((m) => m.instanceId === w.instanceId)?.visible !== false
               return (
                 <div
                   key={w.instanceId}
                   data-grid={item}
                   className={cn(
-                    "relative h-full transition-opacity",
-                    editing && "cursor-grab rounded-xl outline outline-2 outline-primary/30 active:cursor-grabbing",
-                    editing && !isVisible && "opacity-40"
+                    "relative h-full",
+                    editing && "cursor-grab rounded-xl outline outline-2 outline-primary/30 active:cursor-grabbing"
                   )}
                 >
                   {editing && (
-                    <>
-                      <RenameOverlay
-                        title={title}
-                        onChange={(t) => setTitle(w.instanceId, t)}
-                      />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleVisible(w.instanceId) }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        title={isVisible ? "Hide widget" : "Show widget"}
-                        className="absolute top-2 right-2 z-20 flex items-center justify-center rounded bg-background/80 p-1 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:text-foreground"
-                      >
-                        {isVisible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-                      </button>
-                    </>
+                    <RenameOverlay
+                      title={title}
+                      onChange={(t) => setTitle(w.instanceId, t)}
+                    />
                   )}
                   <div className="h-full">
                     {w.content}
