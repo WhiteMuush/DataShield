@@ -6,6 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts"
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
+import { useDashboardEditing } from "@/contexts/DashboardEditContext"
 import { cn } from "@/lib/utils"
 
 type Period = "1m" | "3m" | "6m" | "1y"
@@ -24,6 +25,7 @@ interface TrendChartProps {
 type WidgetConfig = { period: Period }
 
 export function TrendChart({ data }: TrendChartProps) {
+  const editing = useDashboardEditing()
   const [config, setConfig] = useWidgetConfig<WidgetConfig>("trend-chart", { period: "6m" })
   const [showSettings, setShowSettings] = useState(false)
 
@@ -40,15 +42,17 @@ export function TrendChart({ data }: TrendChartProps) {
             New detections — {selectedPeriod.label}
           </p>
         </div>
-        <button
-          onClick={() => setShowSettings((s) => !s)}
-          className={cn(
-            "flex size-7 items-center justify-center rounded-md transition-colors",
-            showSettings ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          {showSettings ? <Check className="size-4" /> : <Settings2 className="size-4" />}
-        </button>
+        {editing && (
+          <button
+            onClick={() => setShowSettings((s) => !s)}
+            className={cn(
+              "flex size-7 items-center justify-center rounded-md transition-colors",
+              showSettings ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            {showSettings ? <Check className="size-4" /> : <Settings2 className="size-4" />}
+          </button>
+        )}
       </div>
 
       {showSettings && (

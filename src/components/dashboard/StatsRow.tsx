@@ -6,6 +6,7 @@ import { StatCard } from "@/components/dashboard/StatCard"
 import { getRiskLevel } from "@/lib/risk"
 import { Users, Bell, Database, ShieldAlert } from "lucide-react"
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
+import { useDashboardEditing } from "@/contexts/DashboardEditContext"
 import { cn } from "@/lib/utils"
 
 type CardKey = "employees" | "alerts" | "detections" | "risk"
@@ -34,6 +35,7 @@ export function StatsRow({
   recentBreaches,
   riskScore,
 }: StatsRowProps) {
+  const editing = useDashboardEditing()
   const [config, setConfig] = useWidgetConfig<WidgetConfig>("stats-row", {
     visibleCards: ["employees", "alerts", "detections", "risk"],
   })
@@ -90,7 +92,7 @@ export function StatsRow({
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
+      {editing && <div className="flex justify-end">
         <button
           onClick={() => setShowSettings((s) => !s)}
           className={cn(
@@ -100,7 +102,7 @@ export function StatsRow({
         >
           {showSettings ? <Check className="size-4" /> : <Settings2 className="size-4" />}
         </button>
-      </div>
+      </div>}
 
       {showSettings && (
         <div className="rounded-lg border border-border bg-card p-4">

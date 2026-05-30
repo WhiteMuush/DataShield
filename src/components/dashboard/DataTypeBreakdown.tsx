@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Settings2, X, Plus, Check } from "lucide-react"
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { PRESET_DATA_TYPES } from "@/lib/dataTypes"
+import { useDashboardEditing } from "@/contexts/DashboardEditContext"
 import { cn } from "@/lib/utils"
 
 type DataItem = { type: string; count: number; percentage: number }
@@ -15,6 +16,7 @@ interface DataTypeBreakdownProps {
 type WidgetConfig = { trackedTypes: string[] }
 
 export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
+  const editing = useDashboardEditing()
   const [config, setConfig] = useWidgetConfig<WidgetConfig>("data-type-breakdown", { trackedTypes: [] })
   const [showSettings, setShowSettings] = useState(false)
   const [newType, setNewType] = useState("")
@@ -59,7 +61,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
           <h2 className="text-sm font-medium text-foreground">Exposed Data Types</h2>
           <p className="text-xs text-muted-foreground">Distribution of compromised data categories</p>
         </div>
-        <button
+        {editing && <button
           onClick={() => setShowSettings((s) => !s)}
           className={cn(
             "flex size-7 items-center justify-center rounded-md transition-colors",
@@ -67,7 +69,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
           )}
         >
           {showSettings ? <Check className="size-4" /> : <Settings2 className="size-4" />}
-        </button>
+        </button>}
       </div>
 
       {showSettings && (
