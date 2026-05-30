@@ -9,6 +9,7 @@ import { BreachSourcesList } from "@/components/dashboard/BreachSourcesList"
 import { TopRiskyEmployees } from "@/components/dashboard/TopRiskyEmployees"
 import { DepartmentRisk } from "@/components/dashboard/DepartmentRisk"
 import { AlertsFeed } from "@/components/dashboard/AlertsFeed"
+import { SeverityDonut } from "@/components/dashboard/SeverityDonut"
 import type { SavedDashboardConfig } from "@/types/dashboard"
 
 export default async function DashboardPage() {
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
       centerContent: true,
       content: <StatsRow {...data} />,
     },
-    // Row 2 — Timeline (large) + Severity donut + Breach sources
+    // Row 2 — Timeline + Top Risky + Breach Sources (5+4+3 = 12)
     {
       instanceId: "trend-chart",
       type: "trend-chart",
@@ -57,17 +58,17 @@ export default async function DashboardPage() {
       instanceId: "breach-sources",
       type: "breach-sources",
       defaultTitle: "Breach Sources",
-      defaultSize: { w: 4, h: 6 },
+      defaultSize: { w: 3, h: 6 },
       defaultPosition: { x: 9, y: 4 },
       minSize: { w: 3, h: 4 },
       content: <BreachSourcesList data={data.breachSources} />,
     },
-    // Row 3 — Department + Data types + Alerts feed
+    // Row 3 — Department + Data types + Severity donut + Alerts feed (3+3+3+3 = 12)
     {
       instanceId: "department-risk",
       type: "department-risk",
       defaultTitle: "Department Exposure",
-      defaultSize: { w: 4, h: 6 },
+      defaultSize: { w: 3, h: 6 },
       defaultPosition: { x: 0, y: 10 },
       minSize: { w: 3, h: 4 },
       content: <DepartmentRisk data={data.departmentRisk} />,
@@ -76,17 +77,26 @@ export default async function DashboardPage() {
       instanceId: "data-type-breakdown",
       type: "data-type-breakdown",
       defaultTitle: "Exposed Data Types",
-      defaultSize: { w: 4, h: 6 },
-      defaultPosition: { x: 4, y: 10 },
+      defaultSize: { w: 3, h: 6 },
+      defaultPosition: { x: 3, y: 10 },
       minSize: { w: 3, h: 4 },
       content: <DataTypeBreakdown data={data.dataTypes} />,
+    },
+    {
+      instanceId: "severity-donut",
+      type: "severity-donut",
+      defaultTitle: "Alert Severity",
+      defaultSize: { w: 3, h: 6 },
+      defaultPosition: { x: 6, y: 10 },
+      minSize: { w: 2, h: 4 },
+      content: <SeverityDonut data={data.alertSeverity} />,
     },
     {
       instanceId: "alerts-feed",
       type: "alerts-feed",
       defaultTitle: "Recent Alerts",
-      defaultSize: { w: 4, h: 6 },
-      defaultPosition: { x: 8, y: 10 },
+      defaultSize: { w: 3, h: 6 },
+      defaultPosition: { x: 9, y: 10 },
       minSize: { w: 3, h: 4 },
       content: <AlertsFeed data={data.recentAlerts} />,
     },
