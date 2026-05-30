@@ -70,13 +70,11 @@ function mergeMeta(saved: WidgetMeta[], widgets: WidgetEntry[]): WidgetMeta[] {
   })
 }
 
-function InlineTitle({
+function RenameOverlay({
   title,
-  editing,
   onChange,
 }: {
   title: string
-  editing: boolean
   onChange: (t: string) => void
 }) {
   const [renaming, setRenaming] = useState(false)
@@ -86,8 +84,7 @@ function InlineTitle({
   useEffect(() => {
     if (renaming) {
       setDraft(title)
-      inputRef.current?.focus()
-      inputRef.current?.select()
+      setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 10)
     }
   }, [renaming, title])
 
@@ -97,10 +94,12 @@ function InlineTitle({
     setRenaming(false)
   }
 
-  if (!editing) return null
-
   return (
-    <div className="mb-1 flex items-center gap-1.5">
+    <div
+      className="absolute top-2 left-2 z-20"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       {renaming ? (
         <input
           ref={inputRef}
@@ -111,12 +110,12 @@ function InlineTitle({
             if (e.key === "Enter") commit()
             if (e.key === "Escape") setRenaming(false)
           }}
-          className="h-6 rounded border border-primary bg-card px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          className="h-6 w-40 rounded border border-primary bg-card px-2 text-xs font-medium text-foreground shadow focus:outline-none"
         />
       ) : (
         <button
           onClick={() => setRenaming(true)}
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-1 rounded bg-background/80 px-1.5 py-0.5 text-xs text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:text-foreground"
         >
           <Pencil className="size-3" />
           Rename
@@ -279,7 +278,7 @@ export function DashboardCanvas({
             onLayoutChange={onLayoutChange}
             margin={[16, 16]}
             containerPadding={[0, 0]}
-            draggableHandle=".drag-handle"
+            draggableCancel="button,input,a,select,textarea"
           >
             {visibleWidgets.map((w) => {
               const item = layout.find((l) => l.i === w.instanceId) ?? {
@@ -297,23 +296,17 @@ export function DashboardCanvas({
                   key={w.instanceId}
                   data-grid={item}
                   className={cn(
-                    "relative",
-                    editing && "ring-2 ring-primary/30 ring-offset-1 rounded-xl"
+                    "relative h-full",
+                    editing && "cursor-grab rounded-xl outline outline-2 outline-primary/30 active:cursor-grabbing"
                   )}
                 >
                   {editing && (
-                    <div className="drag-handle absolute inset-x-0 -top-0 z-10 flex h-6 cursor-grab items-center justify-center rounded-t-xl bg-primary/10 active:cursor-grabbing">
-                      <span className="text-[10px] font-medium text-primary/70 select-none">
-                        {title}
-                      </span>
-                    </div>
-                  )}
-                  <div className={cn("h-full", editing && "pt-6")}>
-                    <InlineTitle
+                    <RenameOverlay
                       title={title}
-                      editing={editing}
                       onChange={(t) => setTitle(w.instanceId, t)}
                     />
+                  )}
+                  <div className="h-full">
                     {w.content}
                   </div>
                 </div>

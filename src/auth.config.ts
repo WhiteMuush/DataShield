@@ -16,7 +16,7 @@ export const authConfig: NextAuthConfig = {
       return token
     },
     session({ session, token }) {
-      session.user.id = token.id as string
+      session.user.id = (token.id ?? token.sub) as string
       session.user.companyId = token.companyId as string
       session.user.role = token.role as "ADMIN" | "VIEWER"
       return session

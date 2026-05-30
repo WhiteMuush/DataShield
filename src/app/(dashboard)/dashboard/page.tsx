@@ -25,7 +25,7 @@ export default async function DashboardPage() {
       defaultTitle: "Key Metrics",
       defaultSize: { w: 12, h: 3 },
       defaultPosition: { x: 0, y: 0 },
-      minSize: { w: 6, h: 2 },
+      minSize: { w: 6, h: 3 },
       content: <StatsRow {...data} />,
     },
     {
