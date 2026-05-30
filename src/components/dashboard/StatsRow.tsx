@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Settings2, Check } from "lucide-react"
 import { StatCard } from "@/components/dashboard/StatCard"
-import { getRiskLevel } from "@/lib/dashboard"
+import { getRiskLevel } from "@/lib/risk"
 import { Users, Bell, Database, ShieldAlert } from "lucide-react"
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { cn } from "@/lib/utils"
