@@ -276,7 +276,7 @@ export function DashboardCanvas({
             </div>
           )}
 
-          <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none")}>
+          <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}>
           {gridWidth > 0 && <ResponsiveGridLayout
             className="layout"
             width={gridWidth}
@@ -307,7 +307,7 @@ export function DashboardCanvas({
                   data-grid={item}
                   className={cn(
                     "relative h-full",
-                    editing && "cursor-grab rounded-xl outline outline-2 outline-primary/30 active:cursor-grabbing"
+                    editing && "rounded-xl outline outline-2 outline-primary/30"
                   )}
                 >
                   {editing && (
