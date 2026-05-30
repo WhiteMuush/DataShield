@@ -156,6 +156,7 @@ export function DashboardCanvas({
       : buildDefaultMeta(widgets)
   )
 
+  const [draggingId, setDraggingId] = useState<string | null>(null)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const persistConfig = useCallback((nextLayout: GridItemLayout[], nextMeta: WidgetMeta[]) => {
@@ -287,6 +288,8 @@ export function DashboardCanvas({
             isDraggable={editing}
             isResizable={editing}
             onLayoutChange={onLayoutChange}
+            onDragStart={(_l, item) => setDraggingId(item.i)}
+            onDragStop={() => setDraggingId(null)}
             margin={[16, 16]}
             containerPadding={[0, 0]}
             draggableCancel="button,input,a,select,textarea"
@@ -308,7 +311,8 @@ export function DashboardCanvas({
                   data-grid={item}
                   className={cn(
                     "relative h-full",
-                    editing && "rounded-xl outline outline-2 outline-primary/30"
+                    editing && "rounded-xl outline outline-2 outline-primary/30",
+                    draggingId === w.instanceId && "drag-glow"
                   )}
                 >
                   {editing && (
