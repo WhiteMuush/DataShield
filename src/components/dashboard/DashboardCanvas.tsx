@@ -304,7 +304,7 @@ export function DashboardCanvas({
               return (
                 <div
                   key={w.instanceId}
-                  data-grid={{ ...item, isDraggable: editing, isResizable: editing, static: !editing }}
+                  data-grid={{ ...item, isDraggable: editing, isResizable: editing }}
                   className={cn(
                     "relative h-full",
                     editing && "rounded-xl outline outline-2 outline-primary/30"
