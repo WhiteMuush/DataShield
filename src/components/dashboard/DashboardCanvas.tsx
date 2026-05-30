@@ -143,6 +143,25 @@ export function DashboardCanvas({
   initialConfig: SavedDashboardConfig | null
 }) {
   const [editing, setEditing] = useState(false)
+  const [zoom, setZoom] = useState(1)
+
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return
+      e.preventDefault()
+      setZoom((z) => Math.min(1, Math.max(0.4, +(z - e.deltaY * 0.001).toFixed(2))))
+    }
+    window.addEventListener("wheel", onWheel, { passive: false })
+    return () => window.removeEventListener("wheel", onWheel)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "0") { e.preventDefault(); setZoom(1) }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
   const [layout, setLayout] = useState<GridItemLayout[]>(() =>
     initialConfig?.layout
@@ -238,6 +257,14 @@ export function DashboardCanvas({
                 Drag to reorder · Resize from corners · Click a title to rename
               </p>
             )}
+            {zoom !== 1 && (
+              <button
+                onClick={() => setZoom(1)}
+                className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+            )}
             {editing ? (
               <Button size="sm" onClick={() => setEditing(false)} className="gap-1.5">
                 <Check className="size-3.5" />
@@ -277,7 +304,11 @@ export function DashboardCanvas({
             </div>
           )}
 
-          <div ref={gridRef} className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}>
+          <div
+            ref={gridRef}
+            style={{ zoom }}
+            className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}
+          >
           {gridWidth > 0 && <ResponsiveGridLayout
             className="layout"
             width={gridWidth}
