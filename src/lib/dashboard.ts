@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function getDashboardData(companyId: string) {
   const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 12)
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
@@ -94,7 +94,7 @@ export function getRiskLevel(score: number): {
 function buildTrendData(records: { detectedAt: Date }[]) {
   const months: Record<string, number> = {}
 
-  for (let i = 5; i >= 0; i--) {
+  for (let i = 11; i >= 0; i--) {
     const d = new Date()
     d.setMonth(d.getMonth() - i)
     const key = d.toLocaleString("en-US", { month: "short", year: "2-digit" })
