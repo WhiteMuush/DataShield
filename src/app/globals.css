@@ -88,7 +88,8 @@
     }
   }
 
-  .drag-glow {
+  .drag-glow,
+  .react-draggable-dragging {
     animation: drag-glow 1.2s ease-in-out infinite;
     border-radius: 0.75rem;
   }
