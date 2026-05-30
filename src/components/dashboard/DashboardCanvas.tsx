@@ -316,7 +316,7 @@ export function DashboardCanvas({
                       onChange={(t) => setTitle(w.instanceId, t)}
                     />
                   )}
-                  <div className={cn("h-full", w.centerContent && "flex items-center")}>
+                  <div className={cn("h-full", w.centerContent && "flex items-center [&>*]:w-full")}>
                     {w.content}
                   </div>
                 </div>
