@@ -235,11 +235,12 @@ export function DashboardCanvas({
     return editing || m?.visible !== false
   })
 
-  const gridRef = useRef<HTMLDivElement>(null)
+  // Viewport ref — measures natural width BEFORE scale/width compensation
+  const viewportRef = useRef<HTMLDivElement>(null)
   const [gridWidth, setGridWidth] = useState(0)
 
   useEffect(() => {
-    const el = gridRef.current
+    const el = viewportRef.current
     if (!el) return
     setGridWidth(el.clientWidth)
     const ro = new ResizeObserver(() => setGridWidth(el.clientWidth))
@@ -304,8 +305,8 @@ export function DashboardCanvas({
             </div>
           )}
 
+          <div ref={viewportRef}>
           <div
-            ref={gridRef}
             style={{
               transform: `scale(${zoom})`,
               transformOrigin: "top left",
@@ -365,6 +366,7 @@ export function DashboardCanvas({
               )
             })}
           </ResponsiveGridLayout>}
+          </div>
           </div>
         </div>
       </DashboardConfigContext.Provider>
