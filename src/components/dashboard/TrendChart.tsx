@@ -7,6 +7,7 @@ import {
 } from "recharts"
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { useDashboardEditing } from "@/contexts/DashboardEditContext"
+import { useWidgetTitle } from "@/hooks/useWidgetTitle"
 import { cn } from "@/lib/utils"
 
 type Period = "1m" | "3m" | "6m" | "1y"
@@ -28,6 +29,7 @@ export function TrendChart({ data }: TrendChartProps) {
   const editing = useDashboardEditing()
   const [config, setConfig] = useWidgetConfig<WidgetConfig>("trend-chart", { period: "6m" })
   const [showSettings, setShowSettings] = useState(false)
+  const { title } = useWidgetTitle("trend-chart", "Incident Timeline")
 
   const selectedPeriod = PERIODS.find((p) => p.key === config.period) ?? PERIODS[2]
   const sliced = data.slice(-selectedPeriod.months)
@@ -37,7 +39,7 @@ export function TrendChart({ data }: TrendChartProps) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h2 className="text-sm font-medium text-foreground">Incident Timeline</h2>
+          <h2 className="text-sm font-medium text-foreground">{title}</h2>
           <p className="text-xs text-muted-foreground">
             New detections — {selectedPeriod.label}
           </p>

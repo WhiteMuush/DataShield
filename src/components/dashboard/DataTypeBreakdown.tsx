@@ -5,6 +5,7 @@ import { Settings2, X, Plus, Check } from "lucide-react"
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { PRESET_DATA_TYPES } from "@/lib/dataTypes"
 import { useDashboardEditing } from "@/contexts/DashboardEditContext"
+import { useWidgetTitle } from "@/hooks/useWidgetTitle"
 import { cn } from "@/lib/utils"
 
 type DataItem = { type: string; count: number; percentage: number }
@@ -20,6 +21,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
   const [config, setConfig] = useWidgetConfig<WidgetConfig>("data-type-breakdown", { trackedTypes: [] })
   const [showSettings, setShowSettings] = useState(false)
   const [newType, setNewType] = useState("")
+  const { title } = useWidgetTitle("data-type-breakdown", "Exposed Data Types")
 
   const toggle = (key: string) => {
     const already = config.trackedTypes.includes(key)
@@ -58,7 +60,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h2 className="text-sm font-medium text-foreground">Exposed Data Types</h2>
+          <h2 className="text-sm font-medium text-foreground">{title}</h2>
           <p className="text-xs text-muted-foreground">Distribution of compromised data categories</p>
         </div>
         {editing && <button
