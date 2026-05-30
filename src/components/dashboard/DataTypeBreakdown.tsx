@@ -57,8 +57,8 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
   const customTypes = config.trackedTypes.filter((t) => !presetKeys.has(t as never))
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="mb-4 flex items-start justify-between">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-card p-5">
+      <div className="mb-4 shrink-0 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-medium text-foreground">{title}</h2>
           <p className="text-xs text-muted-foreground">Distribution of compromised data categories</p>
@@ -75,7 +75,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
       </div>
 
       {showSettings && (
-        <div className="mb-4 space-y-4 rounded-lg border border-border bg-background p-4">
+        <div className="mb-4 shrink-0 space-y-4 rounded-lg border border-border bg-background p-4">
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Types à surveiller
@@ -137,9 +137,11 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
       )}
 
       {merged.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">No data exposures detected</p>
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-sm text-muted-foreground">No data exposures detected</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
           {merged.map(({ type, count, percentage }) => (
             <div key={type}>
               <div className="mb-1.5 flex items-center justify-between">
