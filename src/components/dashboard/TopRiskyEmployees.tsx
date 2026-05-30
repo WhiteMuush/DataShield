@@ -41,14 +41,14 @@ export function TopRiskyEmployees({ data }: { data: Employee[] }) {
       <div className="mb-4 shrink-0 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-medium text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">Employés à contacter en priorité</p>
+          <p className="text-xs text-muted-foreground">Employees to contact first</p>
         </div>
         <AlertTriangle className="size-4 text-muted-foreground shrink-0" />
       </div>
 
       {data.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">Aucun employé compromis</p>
+          <p className="text-sm text-muted-foreground">No compromised employees</p>
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto space-y-2">

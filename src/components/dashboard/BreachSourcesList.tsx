@@ -35,14 +35,14 @@ export function BreachSourcesList({ data }: { data: BreachSource[] }) {
       <div className="mb-4 shrink-0 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-medium text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">Sites ayant compromis vos données</p>
+          <p className="text-xs text-muted-foreground">Sites that exposed your company data</p>
         </div>
         <ShieldAlert className="size-4 text-muted-foreground shrink-0" />
       </div>
 
       {data.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">Aucune fuite détectée</p>
+          <p className="text-sm text-muted-foreground">No breaches detected</p>
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
@@ -58,7 +58,7 @@ export function BreachSourcesList({ data }: { data: BreachSource[] }) {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{breach.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(breach.breachDate).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
+                    {new Date(breach.breachDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                   </p>
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     {breach.dataTypes.slice(0, 4).map((t) => (

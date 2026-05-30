@@ -51,7 +51,7 @@ export function AlertsFeed({ data }: { data: Alert[] }) {
       <div className="mb-3 shrink-0 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-medium text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">{data.length} alertes récentes</p>
+          <p className="text-xs text-muted-foreground">{data.length} recent alerts</p>
         </div>
       </div>
 
@@ -65,14 +65,14 @@ export function AlertsFeed({ data }: { data: Alert[] }) {
               filter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
             )}
           >
-            {f === "ALL" ? "Tous" : f === "OPEN" ? "Ouverts" : "Résolus"}
+            {f === "ALL" ? "All" : f === "OPEN" ? "Open" : "Resolved"}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">Aucune alerte</p>
+          <p className="text-sm text-muted-foreground">No alerts</p>
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5">
@@ -99,7 +99,7 @@ export function AlertsFeed({ data }: { data: Alert[] }) {
                   {STATUS_LABELS[alert.status]}
                 </span>
                 <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {new Date(alert.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  {new Date(alert.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                 </span>
               </div>
             </div>

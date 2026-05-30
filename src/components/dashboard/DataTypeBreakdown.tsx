@@ -78,7 +78,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
         <div className="mb-4 shrink-0 space-y-4 rounded-lg border border-border bg-background p-4">
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Types à surveiller
+              Tracked types
             </p>
             <div className="flex flex-wrap gap-1.5">
               {PRESET_DATA_TYPES.map(({ key, label }) => {
@@ -103,7 +103,7 @@ export function DataTypeBreakdown({ data }: DataTypeBreakdownProps) {
 
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Type personnalisé
+              Custom type
             </p>
             {customTypes.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">

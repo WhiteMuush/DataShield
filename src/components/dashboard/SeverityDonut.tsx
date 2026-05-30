@@ -28,13 +28,13 @@ export function SeverityDonut({ data }: { data: AlertSeverity }) {
       <div className="mb-4 shrink-0 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-medium text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">{total} alertes ouvertes</p>
+          <p className="text-xs text-muted-foreground">{total} open alerts</p>
         </div>
       </div>
 
       {total === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">Aucune alerte ouverte</p>
+          <p className="text-sm text-muted-foreground">No open alerts</p>
         </div>
       ) : (
         <div className="flex-1 min-h-0">
@@ -61,7 +61,7 @@ export function SeverityDonut({ data }: { data: AlertSeverity }) {
                   fontSize: "12px",
                   color: "oklch(var(--foreground))",
                 }}
-                formatter={(value) => [`${value} alertes`, ""]}
+                formatter={(value) => [`${value} alerts`, ""]}
               />
               <Legend
                 iconType="circle"

@@ -15,13 +15,13 @@ export function DepartmentRisk({ data }: { data: DeptData[] }) {
       <div className="mb-4 shrink-0 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-medium text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">Employés compromis par département</p>
+          <p className="text-xs text-muted-foreground">Compromised employees by department</p>
         </div>
       </div>
 
       {data.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>
+          <p className="text-sm text-muted-foreground">No data available</p>
         </div>
       ) : (
         <div className="flex-1 min-h-0">
@@ -57,7 +57,7 @@ export function DepartmentRisk({ data }: { data: DeptData[] }) {
                 }}
                 formatter={(value, _name, props) => [
                   `${value} / ${props.payload.total} (${props.payload.percentage}%)`,
-                  "Compromis",
+                  "Compromised",
                 ]}
               />
               <Bar dataKey="compromised" radius={[0, 4, 4, 0]} maxBarSize={24}>
