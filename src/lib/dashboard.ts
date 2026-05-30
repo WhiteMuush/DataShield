@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/prisma"
+import { calculateRiskScore, getRiskLevel } from "@/lib/risk"
+
+export { calculateRiskScore, getRiskLevel }
 
 export async function getDashboardData(companyId: string) {
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 12)
+  const twelveMonthsAgo = new Date()
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
@@ -18,9 +21,7 @@ export async function getDashboardData(companyId: string) {
     allBreachRecords,
   ] = await Promise.all([
     prisma.employee.count({ where: { companyId } }),
-    prisma.employee.count({
-      where: { companyId, breachRecords: { some: {} } },
-    }),
+    prisma.employee.count({ where: { companyId, breachRecords: { some: {} } } }),
     prisma.alert.count({ where: { companyId, status: "OPEN" } }),
     prisma.alert.count({ where: { companyId, status: "OPEN", severity: "CRITICAL" } }),
     prisma.alert.count({ where: { companyId, status: "OPEN", severity: "HIGH" } }),
@@ -29,7 +30,7 @@ export async function getDashboardData(companyId: string) {
       where: { employee: { companyId }, detectedAt: { gte: thirtyDaysAgo } },
     }),
     prisma.breachRecord.findMany({
-      where: { employee: { companyId }, detectedAt: { gte: sixMonthsAgo } },
+      where: { employee: { companyId }, detectedAt: { gte: twelveMonthsAgo } },
       select: { detectedAt: true },
     }),
     prisma.breachRecord.findMany({
@@ -56,39 +57,6 @@ export async function getDashboardData(companyId: string) {
     trendData: buildTrendData(trendRecords),
     dataTypes: buildDataTypes(allBreachRecords),
   }
-}
-
-export function calculateRiskScore({
-  totalEmployees,
-  compromisedEmployees,
-  criticalAlerts,
-  highAlerts,
-  mediumAlerts,
-  recentBreaches,
-}: {
-  totalEmployees: number
-  compromisedEmployees: number
-  criticalAlerts: number
-  highAlerts: number
-  mediumAlerts: number
-  recentBreaches: number
-}): number {
-  if (totalEmployees === 0) return 0
-  const exposureScore = (compromisedEmployees / totalEmployees) * 40
-  const alertScore = Math.min(criticalAlerts * 12 + highAlerts * 6 + mediumAlerts * 2, 40)
-  const recencyScore = Math.min(recentBreaches * 4, 20)
-  return Math.min(Math.round(exposureScore + alertScore + recencyScore), 100)
-}
-
-export function getRiskLevel(score: number): {
-  level: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
-  label: string
-  variant: "critical" | "high" | "medium" | "ok"
-} {
-  if (score >= 76) return { level: "CRITICAL", label: "Critical risk", variant: "critical" }
-  if (score >= 51) return { level: "HIGH", label: "High risk", variant: "high" }
-  if (score >= 26) return { level: "MEDIUM", label: "Medium risk", variant: "medium" }
-  return { level: "LOW", label: "Low risk", variant: "ok" }
 }
 
 function buildTrendData(records: { detectedAt: Date }[]) {
