@@ -281,7 +281,7 @@ export function DashboardCanvas({
             width={gridWidth}
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
             cols={{ lg: 12, md: 12, sm: 6, xs: 4 }}
-            rowHeight={80}
+            rowHeight={50}
             isDraggable={editing}
             isResizable={editing}
             onLayoutChange={onLayoutChange}
