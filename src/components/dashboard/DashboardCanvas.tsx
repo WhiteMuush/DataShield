@@ -296,8 +296,8 @@ export function DashboardCanvas({
                   key={w.instanceId}
                   data-grid={item}
                   className={cn(
-                    "relative h-full",
-                    editing && "cursor-grab rounded-xl outline outline-2 outline-primary/30 active:cursor-grabbing"
+                    "relative h-full overflow-hidden rounded-xl",
+                    editing && "cursor-grab outline outline-2 outline-primary/30 active:cursor-grabbing"
                   )}
                 >
                   {editing && (
