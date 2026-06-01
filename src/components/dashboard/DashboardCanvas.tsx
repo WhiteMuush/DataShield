@@ -12,6 +12,8 @@ import { DashboardEditContext } from "@/contexts/DashboardEditContext"
 import { DashboardConfigContext } from "@/contexts/DashboardConfigContext"
 import type { GridItemLayout, WidgetMeta, SavedDashboardConfig } from "@/types/dashboard"
 
+const COLS = 12
+
 export type WidgetEntry = {
   instanceId: string
   type: string
@@ -143,24 +145,17 @@ export function DashboardCanvas({
   initialConfig: SavedDashboardConfig | null
 }) {
   const [editing, setEditing] = useState(false)
-  const [zoom, setZoom] = useState(1)
+  const [containerW, setContainerW] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) return
-      e.preventDefault()
-      setZoom((z) => Math.min(1, Math.max(0.4, +(z - e.deltaY * 0.001).toFixed(2))))
-    }
-    window.addEventListener("wheel", onWheel, { passive: false })
-    return () => window.removeEventListener("wheel", onWheel)
-  }, [])
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "0") { e.preventDefault(); setZoom(1) }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      setContainerW(entries[0].contentRect.width)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [])
 
   const [layout, setLayout] = useState<GridItemLayout[]>(() =>
@@ -189,7 +184,7 @@ export function DashboardCanvas({
     }, 800)
   }, [])
 
-  const onLayoutChange = (current: ReactGridLayoutItem[]) => {
+  const onLayoutChange = (current: RglItem[]) => {
     const next = current.map((item) => ({
       i: item.i,
       x: item.x,
@@ -235,36 +230,17 @@ export function DashboardCanvas({
     return editing || m?.visible !== false
   })
 
-  // Viewport ref — measures natural width BEFORE scale/width compensation
-  const viewportRef = useRef<HTMLDivElement>(null)
-  const [gridWidth, setGridWidth] = useState(0)
-
-  useEffect(() => {
-    const el = viewportRef.current
-    if (!el) return
-    setGridWidth(el.clientWidth)
-    const ro = new ResizeObserver(() => setGridWidth(el.clientWidth))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
   return (
     <DashboardEditContext.Provider value={editing}>
       <DashboardConfigContext.Provider value={{ getTitle, setTitle, editing }}>
-        <div>
-          <div className="mb-4 flex items-center justify-end gap-2">
+        <div className="flex h-full flex-col">
+
+          {/* ── Toolbar ────────────────────────────────────────────────── */}
+          <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border px-6 py-3">
             {editing && (
               <p className="mr-auto text-xs text-muted-foreground">
                 Drag to reorder · Resize from corners · Click a title to rename
               </p>
-            )}
-            {zoom !== 1 && (
-              <button
-                onClick={() => setZoom(1)}
-                className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {Math.round(zoom * 100)}%
-              </button>
             )}
             {editing ? (
               <Button size="sm" onClick={() => setEditing(false)} className="gap-1.5">
@@ -279,9 +255,10 @@ export function DashboardCanvas({
             )}
           </div>
 
+          {/* ── Widget visibility panel (edit mode only) ───────────────── */}
           {editing && (
-            <div className="mb-4 flex flex-wrap gap-2 rounded-xl border border-border bg-card p-3">
-              <p className="w-full text-xs font-medium text-muted-foreground mb-1">Widget visibility</p>
+            <div className="flex shrink-0 flex-wrap gap-2 border-b border-border bg-card px-6 py-3">
+              <p className="w-full text-xs font-medium text-muted-foreground">Widget visibility</p>
               {widgets.map((w) => {
                 const m = meta.find((m) => m.instanceId === w.instanceId)
                 const visible = m?.visible !== false
@@ -305,84 +282,81 @@ export function DashboardCanvas({
             </div>
           )}
 
+          {/* ── Scrollable grid ─────────────────────────────────────────── */}
           <div
-            ref={viewportRef}
+            ref={containerRef}
+            className={cn(
+              "flex-1 overflow-y-auto overflow-x-hidden",
+              editing
+                ? "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing"
+                : "[&_.react-resizable-handle]:hidden [&_.react-grid-item]:cursor-auto"
+            )}
             style={{
               backgroundImage: "radial-gradient(circle, oklch(var(--border)) 1px, transparent 1px)",
-              backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
-              margin: "-24px",
-              padding: "24px",
+              backgroundSize: "24px 24px",
             }}
           >
-          <div
-            style={{
-              transform: `scale(${zoom})`,
-              transformOrigin: "top left",
-              width: zoom < 1 ? `${100 / zoom}%` : "100%",
-            }}
-            className={cn(!editing && "[&_.react-resizable-handle]:hidden", editing && "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing")}
-          >
-          {gridWidth > 0 && <ResponsiveGridLayout
-            className="layout"
-            width={gridWidth}
-            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-            cols={{ lg: 12, md: 12, sm: 6, xs: 4 }}
-            rowHeight={50}
-            isDraggable={editing}
-            isResizable={editing}
-            onLayoutChange={onLayoutChange}
-            onDragStart={(_l: unknown, item: ReactGridLayoutItem) => setDraggingId(item.i)}
-            onDragStop={() => setDraggingId(null)}
-            margin={[16, 16]}
-            containerPadding={[0, 0]}
-            draggableCancel="button,input,a,select,textarea"
-          >
-            {visibleWidgets.map((w) => {
-              const item = layout.find((l) => l.i === w.instanceId) ?? {
-                i: w.instanceId,
-                x: 0,
-                y: Infinity,
-                w: w.defaultSize.w,
-                h: w.defaultSize.h,
-                minW: w.minSize.w,
-                minH: w.minSize.h,
-              }
-              const title = getTitle(w.instanceId, w.defaultTitle)
-              return (
-                <div
-                  key={w.instanceId}
-                  data-grid={item}
-                  className={cn(
-                    "relative h-full",
-                    editing && "rounded-xl outline outline-2 outline-primary/30",
-                    draggingId === w.instanceId && "drag-glow"
-                  )}
-                >
-                  {editing && (
-                    <RenameOverlay
-                      title={title}
-                      onChange={(t) => setTitle(w.instanceId, t)}
-                    />
-                  )}
-                  <div
-                    className={cn("h-full", w.centerContent && "flex items-center [&>*]:w-full")}
-                    onMouseDown={!editing ? (e) => e.stopPropagation() : undefined}
-                  >
-                    {w.content}
-                  </div>
-                </div>
-              )
-            })}
-          </ResponsiveGridLayout>}
+            {containerW > 0 && (
+              <ResponsiveGridLayout
+                className="layout"
+                width={containerW}
+                breakpoints={{ lg: 0 }}
+                cols={{ lg: COLS }}
+                rowHeight={50}
+                isDraggable={editing}
+                isResizable={editing}
+                compactType="vertical"
+                preventCollision={false}
+                onLayoutChange={onLayoutChange}
+                onDragStart={(_l: unknown, item: RglItem) => setDraggingId(item.i)}
+                onDragStop={() => setDraggingId(null)}
+                margin={[16, 16]}
+                containerPadding={[16, 16]}
+                draggableCancel="button,input,a,select,textarea"
+              >
+                {visibleWidgets.map((w) => {
+                  const item = layout.find((l) => l.i === w.instanceId) ?? {
+                    i: w.instanceId,
+                    x: 0,
+                    y: Infinity,
+                    w: w.defaultSize.w,
+                    h: w.defaultSize.h,
+                    minW: w.minSize.w,
+                    minH: w.minSize.h,
+                  }
+                  const title = getTitle(w.instanceId, w.defaultTitle)
+                  return (
+                    <div
+                      key={w.instanceId}
+                      data-grid={item}
+                      className={cn(
+                        "relative h-full",
+                        editing && "rounded-xl outline outline-2 outline-primary/30",
+                        draggingId === w.instanceId && "drag-glow"
+                      )}
+                    >
+                      {editing && (
+                        <RenameOverlay
+                          title={title}
+                          onChange={(t) => setTitle(w.instanceId, t)}
+                        />
+                      )}
+                      <div className={cn("h-full", w.centerContent && "flex items-center [&>*]:w-full")}>
+                        {w.content}
+                      </div>
+                    </div>
+                  )
+                })}
+              </ResponsiveGridLayout>
+            )}
           </div>
-          </div>
+
         </div>
       </DashboardConfigContext.Provider>
     </DashboardEditContext.Provider>
   )
 }
 
-// Internal type alias for react-grid-layout item
-type ReactGridLayoutItem = {
+type RglItem = {
   i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number
 }
