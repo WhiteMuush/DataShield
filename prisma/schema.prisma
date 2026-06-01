@@ -28,9 +28,12 @@ model User {
   companyId      String
   createdAt      DateTime @default(now())
 
-  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  dashboardConfig DashboardConfig?
-  dashboardPresets DashboardPreset[]
+  activePresetId  String?
+
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  dashboardConfig  DashboardConfig?
+  dashboardPresets DashboardPreset[] @relation("UserPresets")
+  activePreset     DashboardPreset?  @relation("ActivePreset", fields: [activePresetId], references: [id], onDelete: SetNull)
 }
 
 model DashboardConfig {
@@ -44,17 +47,19 @@ model DashboardConfig {
 }
 
 model DashboardPreset {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String      @id @default(cuid())
+  userId    String?
   companyId String
   name      String
-  isDefault Boolean  @default(false)
-  layout    Json
-  widgets   Json
-  createdAt DateTime @default(now())
+  scope     PresetScope @default(PERSONAL)
+  layout    Json        @default("[]")
+  widgets   Json        @default("[]")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user        User?    @relation("UserPresets", fields: [userId], references: [id], onDelete: Cascade)
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  activeUsers User[]   @relation("ActivePreset")
 
   @@index([userId])
   @@index([companyId])
@@ -63,6 +68,11 @@ model DashboardPreset {
 enum Role {
   ADMIN
   VIEWER
+}
+
+enum PresetScope {
+  PERSONAL
+  COMPANY
 }
 
 model Employee {
