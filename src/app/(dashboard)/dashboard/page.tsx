@@ -31,6 +31,27 @@ export default async function DashboardPage() {
     }),
   ])
 
+  let activePresetId = user?.activePresetId ?? null
+
+  if (presets.length === 0) {
+    const created = await prisma.dashboardPreset.create({
+      data: {
+        name: "Default",
+        scope: "PERSONAL",
+        userId: session!.user.id,
+        companyId: session!.user.companyId,
+        layout: [],
+        widgets: [],
+      },
+    })
+    presets.push(created)
+    activePresetId = created.id
+    await prisma.user.update({
+      where: { id: session!.user.id },
+      data: { activePresetId: created.id },
+    })
+  }
+
   const typedPresets: DashboardPreset[] = presets.map((p) => ({
     id: p.id,
     name: p.name,
@@ -127,7 +148,7 @@ export default async function DashboardPage() {
     <DashboardCanvas
       widgets={widgets}
       presets={typedPresets}
-      activePresetId={user?.activePresetId ?? null}
+      activePresetId={activePresetId}
       userRole={user?.role ?? "VIEWER"}
     />
   )

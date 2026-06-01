@@ -255,7 +255,18 @@ export function DashboardCanvas({
   const [layout, setLayout] = useState<GridItemLayout[]>(() => initLayout(activePreset))
   const [meta, setMeta] = useState<WidgetMeta[]>(() => initMeta(activePreset))
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [addMenuOpen, setAddMenuOpen] = useState(false)
+  const addMenuRef = useRef<HTMLDivElement>(null)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!addMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (!addMenuRef.current?.contains(e.target as Node)) setAddMenuOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [addMenuOpen])
 
   useEffect(() => {
     const el = containerRef.current
@@ -378,31 +389,32 @@ export function DashboardCanvas({
               ))}
 
               {/* New preset button */}
-              <div className="relative group/add">
+              <div ref={addMenuRef} className="relative">
                 <button
+                  onClick={() => isAdmin ? setAddMenuOpen((o) => !o) : createPreset("PERSONAL")}
                   className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   title="Add preset"
                 >
                   <Plus className="size-3.5" />
                 </button>
-                <div className="absolute left-0 top-full z-50 mt-1 hidden min-w-[160px] rounded-md border border-border bg-popover shadow-md group-hover/add:block">
-                  <button
-                    onClick={() => createPreset("PERSONAL")}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
-                  >
-                    <User className="size-3.5" />
-                    Personal preset
-                  </button>
-                  {isAdmin && (
+                {addMenuOpen && isAdmin && (
+                  <div className="absolute left-0 top-full z-50 mt-1 min-w-[160px] rounded-md border border-border bg-popover shadow-md">
                     <button
-                      onClick={() => createPreset("COMPANY")}
+                      onClick={() => { createPreset("PERSONAL"); setAddMenuOpen(false) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
+                    >
+                      <User className="size-3.5" />
+                      Personal preset
+                    </button>
+                    <button
+                      onClick={() => { createPreset("COMPANY"); setAddMenuOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
                     >
                       <Building2 className="size-3.5" />
                       Company preset
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
 
