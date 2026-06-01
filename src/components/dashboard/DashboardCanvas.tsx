@@ -277,6 +277,7 @@ export function DashboardCanvas({
   }, [])
 
   const persistPreset = useCallback((id: string, nextLayout: GridItemLayout[], nextMeta: WidgetMeta[]) => {
+    setPresets((prev) => prev.map((p) => p.id === id ? { ...p, layout: nextLayout, widgets: nextMeta } : p))
     if (saveTimeout.current) clearTimeout(saveTimeout.current)
     saveTimeout.current = setTimeout(() => {
       fetch(`/api/dashboard/presets/${id}`, {
@@ -387,35 +388,35 @@ export function DashboardCanvas({
                   onDelete={() => deletePreset(p.id)}
                 />
               ))}
+            </div>
 
-              {/* New preset button */}
-              <div ref={addMenuRef} className="relative">
-                <button
-                  onClick={() => isAdmin ? setAddMenuOpen((o) => !o) : createPreset("PERSONAL")}
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  title="Add preset"
-                >
-                  <Plus className="size-3.5" />
-                </button>
-                {addMenuOpen && isAdmin && (
-                  <div className="absolute left-0 top-full z-50 mt-1 min-w-[160px] rounded-md border border-border bg-popover shadow-md">
-                    <button
-                      onClick={() => { createPreset("PERSONAL"); setAddMenuOpen(false) }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
-                    >
-                      <User className="size-3.5" />
-                      Personal preset
-                    </button>
-                    <button
-                      onClick={() => { createPreset("COMPANY"); setAddMenuOpen(false) }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
-                    >
-                      <Building2 className="size-3.5" />
-                      Company preset
-                    </button>
-                  </div>
-                )}
-              </div>
+            {/* New preset button — outside overflow container to avoid clipping */}
+            <div ref={addMenuRef} className="relative shrink-0">
+              <button
+                onClick={() => isAdmin ? setAddMenuOpen((o) => !o) : createPreset("PERSONAL")}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Add preset"
+              >
+                <Plus className="size-3.5" />
+              </button>
+              {addMenuOpen && isAdmin && (
+                <div className="absolute left-0 top-full z-50 mt-1 min-w-[160px] rounded-md border border-border bg-popover shadow-md">
+                  <button
+                    onClick={() => { createPreset("PERSONAL"); setAddMenuOpen(false) }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
+                  >
+                    <User className="size-3.5" />
+                    Personal preset
+                  </button>
+                  <button
+                    onClick={() => { createPreset("COMPANY"); setAddMenuOpen(false) }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
+                  >
+                    <Building2 className="size-3.5" />
+                    Company preset
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Right side */}
