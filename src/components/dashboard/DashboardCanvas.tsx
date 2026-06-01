@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef, type ReactNode } from "react"
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { ResponsiveGridLayout } = require("react-grid-layout")
+const { ResponsiveGridLayout, verticalCompactor } = require("react-grid-layout")
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
-import { Settings2, Check, Pencil, Eye, EyeOff, Plus, Trash2, Building2, User } from "lucide-react"
+import { Settings2, Check, Pencil, Plus, Trash2, Building2, User, LayoutGrid, GripHorizontal } from "lucide-react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { DashboardEditContext } from "@/contexts/DashboardEditContext"
@@ -23,6 +24,7 @@ export type WidgetEntry = {
   defaultPosition?: { x: number; y: number }
   minSize: { w: number; h: number }
   centerContent?: boolean
+  defaultVisible?: boolean
 }
 
 function buildDefaultLayout(widgets: WidgetEntry[]): GridItemLayout[] {
@@ -47,7 +49,7 @@ function buildDefaultMeta(widgets: WidgetEntry[]): WidgetMeta[] {
   return widgets.map((w) => ({
     instanceId: w.instanceId,
     title: null,
-    visible: true,
+    visible: w.defaultVisible ?? true,
   }))
 }
 
@@ -78,7 +80,7 @@ function mergeLayout(saved: GridItemLayout[], widgets: WidgetEntry[]): GridItemL
 function mergeMeta(saved: WidgetMeta[], widgets: WidgetEntry[]): WidgetMeta[] {
   return widgets.map((w) => {
     const s = saved.find((m) => m.instanceId === w.instanceId)
-    return s ?? { instanceId: w.instanceId, title: null, visible: true }
+    return s ?? { instanceId: w.instanceId, title: null, visible: w.defaultVisible ?? true }
   })
 }
 
@@ -336,13 +338,21 @@ export function DashboardCanvas({
       i: item.i, x: item.x, y: item.y, w: item.w, h: item.h, minW: item.minW, minH: item.minH,
     }))
     setLayout(next)
-    if (activePreset) persistPreset(activePreset.id, next, meta)
-  }
 
-  const toggleVisible = (instanceId: string) => {
-    const next = meta.map((m) => m.instanceId === instanceId ? { ...m, visible: !m.visible } : m)
-    setMeta(next)
-    if (activePreset) persistPreset(activePreset.id, layout, next)
+    // HARD RULE: the dashboard is only ever modified in Customize mode.
+    // Outside editing we never write — not on mount, not on compaction, never.
+    // New widgets still flow into free space visually (y:Infinity + vertical
+    // compaction on render); that placement is baked into the DB the next time
+    // the user arranges things in Customize.
+    if (!editing || !activePreset) return
+
+    // The grid only renders visible widgets, so `next` omits hidden ones.
+    // Preserve hidden widgets' saved positions so toggling them off never loses placement.
+    const savedLayout = activePreset.layout ?? []
+    const visibleIds = new Set(next.map((l) => l.i))
+    const preserved = savedLayout.filter((l) => !visibleIds.has(l.i))
+    const merged = [...next, ...preserved]
+    persistPreset(activePreset.id, merged, meta)
   }
 
   const setTitle = useCallback((instanceId: string, title: string) => {
@@ -358,7 +368,25 @@ export function DashboardCanvas({
 
   const visibleWidgets = widgets.filter((w) => {
     const m = meta.find((m) => m.instanceId === w.instanceId)
-    return editing || m?.visible !== false
+    return m?.visible !== false
+  })
+
+  // Controlled layout fed to RGL via the `layouts` prop (not per-child data-grid,
+  // which RGL only reads on first mount). Widgets with no saved position get
+  // y: Infinity so vertical compaction drops them into the first free space.
+  // Note: we never set `static` here — drag/resize locking outside Customize is
+  // handled by isDraggable/isResizable={editing}. A `static` item is excluded from
+  // compaction, which would make newly-added widgets overlap instead of flowing in.
+  const rglLayout = visibleWidgets.map((w) => {
+    return layout.find((l) => l.i === w.instanceId) ?? {
+      i: w.instanceId,
+      x: 0,
+      y: Infinity,
+      w: w.defaultSize.w,
+      h: w.defaultSize.h,
+      minW: w.minSize.w,
+      minH: w.minSize.h,
+    }
   })
 
   const isAdmin = userRole === "ADMIN"
@@ -422,9 +450,18 @@ export function DashboardCanvas({
             {/* Right side */}
             <div className="flex shrink-0 items-center gap-2">
               {editing && (
-                <p className="text-xs text-muted-foreground">
-                  Drag · Resize · Rename
-                </p>
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Drag · Resize · Rename
+                  </p>
+                  <Link
+                    href="/dashboard/widgets"
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <LayoutGrid className="size-3.5" />
+                    Library
+                  </Link>
+                </>
               )}
               {editing ? (
                 <Button size="sm" onClick={() => setEditing(false)} className="gap-1.5">
@@ -446,41 +483,12 @@ export function DashboardCanvas({
             </div>
           </div>
 
-          {/* ── Widget visibility panel (edit mode only) ────────────────── */}
-          {editing && (
-            <div className="flex shrink-0 flex-wrap gap-2 border-b border-border bg-card px-6 py-3">
-              <p className="w-full text-xs font-medium text-muted-foreground">Widget visibility</p>
-              {widgets.map((w) => {
-                const m = meta.find((m) => m.instanceId === w.instanceId)
-                const visible = m?.visible !== false
-                const title = getTitle(w.instanceId, w.defaultTitle)
-                return (
-                  <button
-                    key={w.instanceId}
-                    onClick={() => toggleVisible(w.instanceId)}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      visible
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {visible ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
-                    {title}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
           {/* ── Scrollable grid ──────────────────────────────────────────── */}
           <div
             ref={containerRef}
             className={cn(
               "flex-1 overflow-y-auto overflow-x-hidden",
-              editing
-                ? "select-none [&_.react-grid-item]:cursor-grab [&_.react-grid-item:active]:cursor-grabbing"
-                : "[&_.react-resizable-handle]:hidden [&_.react-grid-item]:cursor-auto"
+              editing ? "select-none" : "[&_.react-resizable-handle]:hidden"
             )}
             style={{
               backgroundImage: "radial-gradient(circle, oklch(var(--border)) 1px, transparent 1px)",
@@ -493,33 +501,22 @@ export function DashboardCanvas({
                 width={containerW}
                 breakpoints={{ lg: 0 }}
                 cols={{ lg: COLS }}
+                layouts={{ lg: rglLayout }}
                 rowHeight={50}
-                isDraggable={editing}
-                isResizable={editing}
-                compactType="vertical"
-                preventCollision={false}
+                compactor={verticalCompactor}
+                dragConfig={{ enabled: editing, handle: ".widget-drag-handle" }}
+                resizeConfig={{ enabled: editing }}
                 onLayoutChange={onLayoutChange}
-                onDragStart={(_l: unknown, item: RglItem) => setDraggingId(item.i)}
+                onDragStart={(_layout: unknown, oldItem: RglItem | null) => setDraggingId(oldItem?.i ?? null)}
                 onDragStop={() => setDraggingId(null)}
                 margin={[16, 16]}
                 containerPadding={[16, 16]}
-                draggableCancel="button,input,a,select,textarea"
               >
                 {visibleWidgets.map((w) => {
-                  const item = layout.find((l) => l.i === w.instanceId) ?? {
-                    i: w.instanceId,
-                    x: 0,
-                    y: Infinity,
-                    w: w.defaultSize.w,
-                    h: w.defaultSize.h,
-                    minW: w.minSize.w,
-                    minH: w.minSize.h,
-                  }
                   const title = getTitle(w.instanceId, w.defaultTitle)
                   return (
                     <div
                       key={w.instanceId}
-                      data-grid={item}
                       className={cn(
                         "relative h-full",
                         editing && "rounded-xl outline outline-2 outline-primary/30",
@@ -527,10 +524,22 @@ export function DashboardCanvas({
                       )}
                     >
                       {editing && (
-                        <RenameOverlay
-                          title={title}
-                          onChange={(t) => setTitle(w.instanceId, t)}
-                        />
+                        <>
+                          {/* Dedicated drag handle — the only place that starts a drag,
+                              so chart tooltips and in-widget settings stay clickable. */}
+                          <button
+                            type="button"
+                            className="widget-drag-handle absolute left-1/2 top-2 z-30 flex -translate-x-1/2 cursor-grab items-center gap-1 rounded-full border border-primary/40 bg-card/95 px-2.5 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:text-foreground active:cursor-grabbing"
+                            title="Drag to move"
+                          >
+                            <GripHorizontal className="size-3" />
+                            Move
+                          </button>
+                          <RenameOverlay
+                            title={title}
+                            onChange={(t) => setTitle(w.instanceId, t)}
+                          />
+                        </>
                       )}
                       <div className={cn("h-full", w.centerContent && "flex items-center [&>*]:w-full")}>
                         {w.content}

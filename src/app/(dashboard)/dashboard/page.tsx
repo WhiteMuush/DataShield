@@ -10,6 +10,17 @@ import { TopRiskyEmployees } from "@/components/dashboard/TopRiskyEmployees"
 import { DepartmentRisk } from "@/components/dashboard/DepartmentRisk"
 import { AlertsFeed } from "@/components/dashboard/AlertsFeed"
 import { SeverityDonut } from "@/components/dashboard/SeverityDonut"
+import { RiskGauge } from "@/components/dashboard/RiskGauge"
+import { AlertsByMonth } from "@/components/dashboard/AlertsByMonth"
+import { BreachSourceDonut } from "@/components/dashboard/BreachSourceDonut"
+import { CriticalAlertsList } from "@/components/dashboard/CriticalAlertsList"
+import { AlertsByDepartment } from "@/components/dashboard/AlertsByDepartment"
+import { EmployeeExposure } from "@/components/dashboard/EmployeeExposure"
+import { AlertStatusBreakdown } from "@/components/dashboard/AlertStatusBreakdown"
+import { BreachTimeline } from "@/components/dashboard/BreachTimeline"
+import { TopBreaches } from "@/components/dashboard/TopBreaches"
+import { DataTypeRadar } from "@/components/dashboard/DataTypeRadar"
+import { AlertVelocity } from "@/components/dashboard/AlertVelocity"
 import type { DashboardPreset } from "@/types/dashboard"
 
 export default async function DashboardPage() {
@@ -65,7 +76,7 @@ export default async function DashboardPage() {
   }))
 
   const widgets: WidgetEntry[] = [
-    // Row 1 — KPIs full width
+    // ── Default visible ─────────────────────────────────────────────
     {
       instanceId: "stats-row",
       type: "stats-row",
@@ -76,7 +87,6 @@ export default async function DashboardPage() {
       centerContent: true,
       content: <StatsRow {...data} />,
     },
-    // Row 2 — Main chart + Breach sources (7+5 = 12)
     {
       instanceId: "trend-chart",
       type: "trend-chart",
@@ -95,7 +105,6 @@ export default async function DashboardPage() {
       minSize: { w: 3, h: 4 },
       content: <BreachSourcesList data={data.breachSources} />,
     },
-    // Row 3 — Top risky + Department + Severity (4+5+3 = 12)
     {
       instanceId: "top-risky-employees",
       type: "top-risky-employees",
@@ -123,7 +132,6 @@ export default async function DashboardPage() {
       minSize: { w: 2, h: 4 },
       content: <SeverityDonut data={data.alertSeverity} />,
     },
-    // Row 4 — Data types + Alerts feed (6+6 = 12)
     {
       instanceId: "data-type-breakdown",
       type: "data-type-breakdown",
@@ -141,6 +149,106 @@ export default async function DashboardPage() {
       defaultPosition: { x: 6, y: 19 },
       minSize: { w: 3, h: 4 },
       content: <AlertsFeed data={data.recentAlerts} />,
+    },
+    // ── Hidden by default — activate via Widget Library ──────────────
+    {
+      instanceId: "risk-gauge",
+      type: "risk-gauge",
+      defaultTitle: "Risk Score",
+      defaultSize: { w: 3, h: 5 },
+      minSize: { w: 2, h: 4 },
+      defaultVisible: false,
+      content: <RiskGauge riskScore={data.riskScore} />,
+    },
+    {
+      instanceId: "alert-status-breakdown",
+      type: "alert-status-breakdown",
+      defaultTitle: "Alert Status",
+      defaultSize: { w: 4, h: 5 },
+      minSize: { w: 3, h: 3 },
+      defaultVisible: false,
+      content: <AlertStatusBreakdown data={data.alertStatusCounts} />,
+    },
+    {
+      instanceId: "employee-exposure",
+      type: "employee-exposure",
+      defaultTitle: "Employee Exposure",
+      defaultSize: { w: 4, h: 5 },
+      minSize: { w: 3, h: 3 },
+      defaultVisible: false,
+      content: <EmployeeExposure data={data.employeeExposureLevels} totalEmployees={data.totalEmployees} />,
+    },
+    {
+      instanceId: "alerts-by-month",
+      type: "alerts-by-month",
+      defaultTitle: "Alerts by Month",
+      defaultSize: { w: 7, h: 7 },
+      minSize: { w: 4, h: 5 },
+      defaultVisible: false,
+      content: <AlertsByMonth data={data.alertsByMonth} />,
+    },
+    {
+      instanceId: "alert-velocity",
+      type: "alert-velocity",
+      defaultTitle: "Alert Velocity",
+      defaultSize: { w: 5, h: 6 },
+      minSize: { w: 3, h: 4 },
+      defaultVisible: false,
+      content: <AlertVelocity data={data.alertVelocityData} />,
+    },
+    {
+      instanceId: "critical-alerts",
+      type: "critical-alerts",
+      defaultTitle: "Urgent Alerts",
+      defaultSize: { w: 5, h: 7 },
+      minSize: { w: 3, h: 4 },
+      defaultVisible: false,
+      content: <CriticalAlertsList data={data.urgentAlerts} />,
+    },
+    {
+      instanceId: "alerts-by-department",
+      type: "alerts-by-department",
+      defaultTitle: "Alerts by Department",
+      defaultSize: { w: 5, h: 6 },
+      minSize: { w: 3, h: 4 },
+      defaultVisible: false,
+      content: <AlertsByDepartment data={data.alertsByDepartment} />,
+    },
+    {
+      instanceId: "breach-source-donut",
+      type: "breach-source-donut",
+      defaultTitle: "Breach Origin",
+      defaultSize: { w: 3, h: 6 },
+      minSize: { w: 2, h: 4 },
+      defaultVisible: false,
+      content: <BreachSourceDonut data={data.breachSources} />,
+    },
+    {
+      instanceId: "breach-timeline",
+      type: "breach-timeline",
+      defaultTitle: "Breach Timeline",
+      defaultSize: { w: 4, h: 8 },
+      minSize: { w: 3, h: 5 },
+      defaultVisible: false,
+      content: <BreachTimeline data={data.breachSources} />,
+    },
+    {
+      instanceId: "top-breaches",
+      type: "top-breaches",
+      defaultTitle: "Top Breaches by Impact",
+      defaultSize: { w: 5, h: 6 },
+      minSize: { w: 3, h: 4 },
+      defaultVisible: false,
+      content: <TopBreaches data={data.breachSources} />,
+    },
+    {
+      instanceId: "data-type-radar",
+      type: "data-type-radar",
+      defaultTitle: "Data Type Radar",
+      defaultSize: { w: 4, h: 6 },
+      minSize: { w: 3, h: 4 },
+      defaultVisible: false,
+      content: <DataTypeRadar data={data.dataTypes} />,
     },
   ]
 
