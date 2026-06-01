@@ -10,18 +10,38 @@ import { TopRiskyEmployees } from "@/components/dashboard/TopRiskyEmployees"
 import { DepartmentRisk } from "@/components/dashboard/DepartmentRisk"
 import { AlertsFeed } from "@/components/dashboard/AlertsFeed"
 import { SeverityDonut } from "@/components/dashboard/SeverityDonut"
-import type { SavedDashboardConfig } from "@/types/dashboard"
+import type { DashboardPreset } from "@/types/dashboard"
 
 export default async function DashboardPage() {
   const session = await auth()
-  const [data, savedConfig] = await Promise.all([
+  const [data, presets, user] = await Promise.all([
     getDashboardData(session!.user.companyId),
-    prisma.dashboardConfig.findUnique({ where: { userId: session!.user.id } }),
+    prisma.dashboardPreset.findMany({
+      where: {
+        OR: [
+          { userId: session!.user.id, scope: "PERSONAL" },
+          { companyId: session!.user.companyId, scope: "COMPANY" },
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.user.findUnique({
+      where: { id: session!.user.id },
+      select: { activePresetId: true, role: true },
+    }),
   ])
 
-  const initialConfig: SavedDashboardConfig | null = savedConfig
-    ? { layout: savedConfig.layout as any, widgets: savedConfig.widgets as any }
-    : null
+  const typedPresets: DashboardPreset[] = presets.map((p) => ({
+    id: p.id,
+    name: p.name,
+    scope: p.scope as DashboardPreset["scope"],
+    layout: p.layout as DashboardPreset["layout"],
+    widgets: p.widgets as DashboardPreset["widgets"],
+    userId: p.userId,
+    companyId: p.companyId,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  }))
 
   const widgets: WidgetEntry[] = [
     // Row 1 — KPIs full width
@@ -103,5 +123,12 @@ export default async function DashboardPage() {
     },
   ]
 
-  return <DashboardCanvas widgets={widgets} initialConfig={initialConfig} />
+  return (
+    <DashboardCanvas
+      widgets={widgets}
+      presets={typedPresets}
+      activePresetId={user?.activePresetId ?? null}
+      userRole={user?.role ?? "VIEWER"}
+    />
+  )
 }
