@@ -368,7 +368,7 @@ export function DashboardCanvas({
   return (
     <DashboardEditContext.Provider value={editing}>
       <DashboardConfigContext.Provider value={{ getTitle, setTitle, editing }}>
-        <div className="flex h-full flex-col">
+        <div className="flex flex-1 flex-col min-h-0">
 
           {/* ── Toolbar ─────────────────────────────────────────────────── */}
           <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2">
