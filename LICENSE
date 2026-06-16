@@ -1,4 +1,4 @@
-DataShield Proprietary License
+DataShield Source-Available Non-Commercial License
 
 Copyright (c) 2026 Melvin PETIT (WhiteMuush). All rights reserved.
 
@@ -23,20 +23,31 @@ Copyright (c) 2026 Melvin PETIT (WhiteMuush). All rights reserved.
    revocable right to:
    a. view and study the source code;
    b. install, run, and use the Software for Your own purposes, including
-      internal commercial and business use;
-   c. modify the Software for Your own internal use; and
-   d. submit Contributions to the Owner.
+      internal commercial and business use (for example, deploying the Software
+      for Your own organization and its employees);
+   c. modify the Software, and fork the repository;
+   d. distribute, publish, and share the Software and Your modified versions to
+      third parties for non-commercial purposes, provided that You retain all
+      copyright, license, and attribution notices and that the recipient
+      receives the whole under this same License; and
+   e. submit Contributions to the Owner.
 
 4. Restrictions
 
    You may not, without the Owner's prior written permission:
    a. sell, rent, lease, sublicense, or otherwise commercialize the Software
-      or any derivative of it;
+      or any derivative of it, or charge any fee for the Software itself;
    b. distribute, publish, or share the Software or any modified version of it,
-      in source or binary form, to any third party;
+      in source or binary form, for any commercial purpose;
    c. offer the Software, in whole or in part, as a hosted or managed service
       to third parties;
    d. remove, alter, or obscure any copyright, license, or attribution notice.
+
+   For the purposes of this Section, "non-commercial" means use that is not
+   primarily intended for or directed toward commercial advantage or monetary
+   compensation. Running the Software internally to operate Your own
+   organization, including for the benefit of Your employees, is permitted
+   under Section 3 and is not, by itself, a commercial distribution.
 
 5. Contributions
 
