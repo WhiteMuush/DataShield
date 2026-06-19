@@ -103,12 +103,7 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    // Round and dedupe: auto-fit changes page height, which can toggle the
-    // scrollbar and jitter the width, feeding back into a resize loop.
-    const ro = new ResizeObserver((entries) => {
-      const w = Math.round(entries[0].contentRect.width)
-      setContainerW((prev) => (prev === w ? prev : w))
-    })
+    const ro = new ResizeObserver((entries) => setContainerW(entries[0].contentRect.width))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
@@ -121,11 +116,8 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
     const neededH = new Map<string, number>()
     const neededW = new Map<string, number>()
     contentEls.current.forEach((node, id) => {
-      // Measure the section's intrinsic size (the measuring node is h-full and
-      // would otherwise just report the cell height).
-      const inner = (node.firstElementChild as HTMLElement) ?? node
-      neededH.set(id, rowsForPx(inner.scrollHeight))
-      neededW.set(id, colsForPx(inner.scrollWidth, containerW))
+      neededH.set(id, rowsForPx(node.scrollHeight))
+      neededW.set(id, colsForPx(node.scrollWidth, containerW))
     })
     const merge = (prev: Record<string, number>, needed: Map<string, number>) => {
       let changed = false
@@ -145,10 +137,7 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
       const next = prev.map((l) => {
         const nh = neededH.get(l.i)
         const nw = neededW.get(l.i)
-        // Height auto-fits the content (grow and shrink) so no dead space below.
-        const h = nh ?? l.h
-        // Width only grows: content that reflows reports no overflow, so never
-        // shrink below the chosen/default span.
+        const h = nh !== undefined && nh > l.h ? nh : l.h
         const w = nw !== undefined && nw > l.w ? nw : l.w
         if (h !== l.h || w !== l.w) {
           changed = true
@@ -162,13 +151,7 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
 
   useEffect(() => {
     const ro = new ResizeObserver(() => fitHeights())
-    // Observe the intrinsic section element, not the cell-sized node: the cell
-    // height is driven by fitHeights, so observing it would feed back into an
-    // infinite resize loop.
-    contentEls.current.forEach((node) => {
-      const inner = node.firstElementChild
-      if (inner) ro.observe(inner)
-    })
+    contentEls.current.forEach((node) => ro.observe(node))
     fitHeights()
     return () => ro.disconnect()
   }, [fitHeights, hidden, containerW, sections.length])
