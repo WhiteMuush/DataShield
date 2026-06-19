@@ -144,17 +144,16 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
     })
   }, [])
 
+  // Content height only changes with width (container queries reflow on the
+  // tile width). Re-measure when widths change, never via a continuous
+  // ResizeObserver: height is intentionally NOT a dependency, so fitHeights
+  // setting h cannot retrigger this effect. That makes the auto-fit
+  // loop-free by construction (previous versions oscillated forever).
+  const widthSig = layout.map((l) => `${l.i}:${l.w}`).join("|")
+  const hiddenSig = hidden.join(",")
   useEffect(() => {
-    const ro = new ResizeObserver(() => fitHeights())
-    // Observe the intrinsic probe, not the cell-sized node: the cell height is
-    // driven by fitHeights, so observing it would feed an infinite loop.
-    contentEls.current.forEach((node) => {
-      const probe = node.querySelector("[data-measure]")
-      if (probe) ro.observe(probe)
-    })
     fitHeights()
-    return () => ro.disconnect()
-  }, [fitHeights, hidden, containerW, sections.length])
+  }, [fitHeights, widthSig, containerW, hiddenSig, sections.length])
 
   useEffect(() => {
     if (!sectionsMenuOpen) return
@@ -331,7 +330,7 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
                     if (node) contentEls.current.set(s.id, node)
                     else contentEls.current.delete(s.id)
                   }}
-                  className="h-full overflow-auto"
+                  className="h-full overflow-hidden"
                 >
                   {s.content}
                 </div>
