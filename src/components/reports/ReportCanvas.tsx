@@ -91,7 +91,14 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const ro = new ResizeObserver((entries) => setContainerW(entries[0].contentRect.width))
+    // Round and dedupe: contentRect.width is fractional and jitters by
+    // sub-pixels as tiles auto-fit, and containerW is a dependency of the
+    // fitHeights effect. An unrounded value changes every render and feeds an
+    // endless update loop (Maximum update depth exceeded).
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.round(entries[0].contentRect.width)
+      setContainerW((prev) => (prev === w ? prev : w))
+    })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
