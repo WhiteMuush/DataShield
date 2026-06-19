@@ -103,7 +103,12 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const ro = new ResizeObserver((entries) => setContainerW(entries[0].contentRect.width))
+    // Round and dedupe: auto-fit changes page height, which can toggle the
+    // scrollbar and jitter the width, feeding back into a resize loop.
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.round(entries[0].contentRect.width)
+      setContainerW((prev) => (prev === w ? prev : w))
+    })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
