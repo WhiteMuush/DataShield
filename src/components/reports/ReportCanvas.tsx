@@ -13,7 +13,6 @@ const STORAGE_KEY = "datashield:reports:layout:v5"
 const COLS = 12
 const ROW_H = 50
 const MARGIN_Y = 16
-const MARGIN_X = 16
 const DEFAULT_H = 5
 const MIN_W = 3
 const MIN_H = 3
@@ -22,16 +21,6 @@ const MIN_H = 3
 // height: row n spans n*ROW_H + (n-1)*MARGIN_Y).
 function rowsForPx(px: number): number {
   return Math.max(MIN_H, Math.ceil((px + MARGIN_Y) / (ROW_H + MARGIN_Y)))
-}
-
-// Columns needed to show `px` of content without clipping. Column width derives
-// from the container: colW = (containerW - (COLS-1)*MARGIN_X) / COLS, and w cols
-// span w*colW + (w-1)*MARGIN_X.
-function colsForPx(px: number, containerW: number): number {
-  if (containerW <= 0) return MIN_W
-  const colW = (containerW - (COLS - 1) * MARGIN_X) / COLS
-  if (colW <= 0) return MIN_W
-  return Math.min(COLS, Math.max(MIN_W, Math.ceil((px + MARGIN_X) / (colW + MARGIN_X))))
 }
 
 export type Span = 4 | 6 | 12
@@ -74,7 +63,6 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   const [hidden, setHidden] = useState<string[]>([])
   const [sectionsMenuOpen, setSectionsMenuOpen] = useState(false)
   const [minHeights, setMinHeights] = useState<Record<string, number>>({})
-  const [minWidths, setMinWidths] = useState<Record<string, number>>({})
   const containerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const contentEls = useRef(new Map<string, HTMLDivElement>())
@@ -114,40 +102,38 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   // resize floor (minH): the handle stops at content height, no snap-back.
   const fitHeights = useCallback(() => {
     const neededH = new Map<string, number>()
-    const neededW = new Map<string, number>()
     contentEls.current.forEach((node, id) => {
-      neededH.set(id, rowsForPx(node.scrollHeight))
-      neededW.set(id, colsForPx(node.scrollWidth, containerW))
+      // Measure the natural-height probe, not the cell-filling node, so the
+      // floor reflects the intrinsic content height and a manual grow does not
+      // raise the floor (which would block shrinking back down).
+      const probe = (node.querySelector("[data-measure]") as HTMLElement | null) ?? node
+      neededH.set(id, rowsForPx(probe.scrollHeight))
     })
-    const merge = (prev: Record<string, number>, needed: Map<string, number>) => {
+    setMinHeights((prev) => {
       let changed = false
       const next = { ...prev }
-      needed.forEach((n, id) => {
+      neededH.forEach((n, id) => {
         if (next[id] !== n) {
           next[id] = n
           changed = true
         }
       })
       return changed ? next : prev
-    }
-    setMinHeights((prev) => merge(prev, neededH))
-    setMinWidths((prev) => merge(prev, neededW))
+    })
     setLayout((prev) => {
       let changed = false
       const next = prev.map((l) => {
         const nh = neededH.get(l.i)
-        const nw = neededW.get(l.i)
-        const h = nh !== undefined && nh > l.h ? nh : l.h
-        const w = nw !== undefined && nw > l.w ? nw : l.w
-        if (h !== l.h || w !== l.w) {
+        // Grow to fit content; never auto-shrink (manual size is kept).
+        if (nh !== undefined && nh > l.h) {
           changed = true
-          return { ...l, h, w }
+          return { ...l, h: nh }
         }
         return l
       })
       return changed ? next : prev
     })
-  }, [containerW])
+  }, [])
 
   useEffect(() => {
     const ro = new ResizeObserver(() => fitHeights())
@@ -188,15 +174,15 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
         minW: MIN_W,
         minH: MIN_H,
       }
-    // Content-fit floors block shrinking below what the content needs.
+    // Content-fit height floor blocks shrinking below what the content needs,
+    // while still allowing manual grow. Width has no reliable intrinsic min
+    // (content reflows), so it stays freely resizable down to MIN_W.
     const floorH = Math.max(MIN_H, minHeights[s.id] ?? MIN_H)
-    const floorW = Math.min(COLS, Math.max(MIN_W, minWidths[s.id] ?? MIN_W))
     return {
       ...base,
       minH: floorH,
-      minW: floorW,
+      minW: MIN_W,
       h: Math.max(base.h, floorH),
-      w: Math.max(base.w, floorW),
     }
   })
 
