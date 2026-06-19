@@ -157,7 +157,13 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
 
   useEffect(() => {
     const ro = new ResizeObserver(() => fitHeights())
-    contentEls.current.forEach((node) => ro.observe(node))
+    // Observe the intrinsic section element, not the cell-sized node: the cell
+    // height is driven by fitHeights, so observing it would feed back into an
+    // infinite resize loop.
+    contentEls.current.forEach((node) => {
+      const inner = node.firstElementChild
+      if (inner) ro.observe(inner)
+    })
     fitHeights()
     return () => ro.disconnect()
   }, [fitHeights, hidden, containerW, sections.length])
