@@ -194,6 +194,19 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   })
 
   const onLayoutChange = (current: RglItem[]) => {
+    // RGL fires this on every layout-prop change (which we recreate each
+    // render). Bail out when nothing actually moved/resized, otherwise the
+    // setLayout -> re-render -> new layout prop -> onLayoutChange cycle never
+    // settles (Maximum update depth exceeded).
+    const prevById = new Map(layout.map((l) => [l.i, l]))
+    const unchanged =
+      current.length > 0 &&
+      current.every((c) => {
+        const p = prevById.get(c.i)
+        return p && p.x === c.x && p.y === c.y && p.w === c.w && p.h === c.h
+      })
+    if (unchanged) return
+
     // Keep hidden sections' saved positions so toggling them back never loses placement.
     const visibleIds = new Set(current.map((l) => l.i))
     const preserved = layout.filter((l) => !visibleIds.has(l.i))
