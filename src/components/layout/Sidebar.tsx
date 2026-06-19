@@ -38,7 +38,7 @@ export function Sidebar({ companyName, userEmail, openAlerts }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-40 flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar shadow-xl transition-transform duration-200 ease-out",
+        "fixed inset-y-0 left-0 z-40 flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar shadow-[4px_0_24px_-6px_oklch(var(--primary)/0.18)] transition-transform duration-200 ease-out",
         open ? "translate-x-0" : "-translate-x-full",
       )}
     >
