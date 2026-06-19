@@ -3,8 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
+import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./SidebarContext"
+
+// Auto-close the floating sidebar after this idle delay (no pointer over it).
+const AUTO_CLOSE_MS = 4000
 import {
   LayoutDashboard,
   Users,
@@ -33,10 +37,30 @@ interface SidebarProps {
 
 export function Sidebar({ companyName, userEmail, openAlerts }: SidebarProps) {
   const pathname = usePathname()
-  const { open, toggle } = useSidebar()
+  const { open, toggle, close } = useSidebar()
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearTimer = () => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
+  }
+  const startTimer = () => {
+    clearTimer()
+    timer.current = setTimeout(close, AUTO_CLOSE_MS)
+  }
+
+  // Start the idle countdown whenever the sidebar opens; hovering pauses it.
+  useEffect(() => {
+    if (open) startTimer()
+    else clearTimer()
+    return clearTimer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   return (
     <aside
+      onMouseEnter={clearTimer}
+      onMouseLeave={startTimer}
       className={cn(
         "fixed inset-y-0 left-0 z-40 flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar shadow-[4px_0_24px_-6px_oklch(var(--primary)/0.18)] transition-transform duration-200 ease-out",
         open ? "translate-x-0" : "-translate-x-full",
