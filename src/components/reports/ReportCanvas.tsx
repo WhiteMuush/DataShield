@@ -116,8 +116,11 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
     const neededH = new Map<string, number>()
     const neededW = new Map<string, number>()
     contentEls.current.forEach((node, id) => {
-      neededH.set(id, rowsForPx(node.scrollHeight))
-      neededW.set(id, colsForPx(node.scrollWidth, containerW))
+      // Measure the section's intrinsic size (the measuring node is h-full and
+      // would otherwise just report the cell height).
+      const inner = (node.firstElementChild as HTMLElement) ?? node
+      neededH.set(id, rowsForPx(inner.scrollHeight))
+      neededW.set(id, colsForPx(inner.scrollWidth, containerW))
     })
     const merge = (prev: Record<string, number>, needed: Map<string, number>) => {
       let changed = false
@@ -137,7 +140,10 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
       const next = prev.map((l) => {
         const nh = neededH.get(l.i)
         const nw = neededW.get(l.i)
-        const h = nh !== undefined && nh > l.h ? nh : l.h
+        // Height auto-fits the content (grow and shrink) so no dead space below.
+        const h = nh ?? l.h
+        // Width only grows: content that reflows reports no overflow, so never
+        // shrink below the chosen/default span.
         const w = nw !== undefined && nw > l.w ? nw : l.w
         if (h !== l.h || w !== l.w) {
           changed = true
