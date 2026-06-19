@@ -124,8 +124,10 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
       let changed = false
       const next = prev.map((l) => {
         const nh = neededH.get(l.i)
-        // Grow to fit content; never auto-shrink (manual size is kept).
-        if (nh !== undefined && nh > l.h) {
+        // Height auto-fits content (grow and shrink) so there is never dead
+        // space below short content. Safe from feedback loops because the
+        // measurement reads the intrinsic probe, not the cell-sized node.
+        if (nh !== undefined && nh !== l.h) {
           changed = true
           return { ...l, h: nh }
         }
@@ -137,7 +139,12 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
 
   useEffect(() => {
     const ro = new ResizeObserver(() => fitHeights())
-    contentEls.current.forEach((node) => ro.observe(node))
+    // Observe the intrinsic probe, not the cell-sized node: the cell height is
+    // driven by fitHeights, so observing it would feed an infinite loop.
+    contentEls.current.forEach((node) => {
+      const probe = node.querySelector("[data-measure]")
+      if (probe) ro.observe(probe)
+    })
     fitHeights()
     return () => ro.disconnect()
   }, [fitHeights, hidden, containerW, sections.length])
