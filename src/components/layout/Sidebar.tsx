@@ -33,7 +33,7 @@ export function Sidebar({ companyName, userEmail, openAlerts }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+    <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar shadow-xl">
       <div className="flex h-12 items-center border-b border-sidebar-border px-4">
         <span className="text-sm font-semibold text-sidebar-foreground">DataShield</span>
       </div>
