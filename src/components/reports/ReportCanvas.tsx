@@ -13,6 +13,7 @@ const STORAGE_KEY = "datashield:reports:layout:v5"
 const COLS = 12
 const ROW_H = 50
 const MARGIN_Y = 16
+const MARGIN_X = 16
 const DEFAULT_H = 5
 const MIN_W = 3
 const MIN_H = 3
@@ -21,6 +22,16 @@ const MIN_H = 3
 // height: row n spans n*ROW_H + (n-1)*MARGIN_Y).
 function rowsForPx(px: number): number {
   return Math.max(MIN_H, Math.ceil((px + MARGIN_Y) / (ROW_H + MARGIN_Y)))
+}
+
+// Columns needed to show `px` of content without clipping. Column width derives
+// from the container: colW = (containerW - (COLS-1)*MARGIN_X) / COLS, and w cols
+// span w*colW + (w-1)*MARGIN_X.
+function colsForPx(px: number, containerW: number): number {
+  if (containerW <= 0) return MIN_W
+  const colW = (containerW - (COLS - 1) * MARGIN_X) / COLS
+  if (colW <= 0) return MIN_W
+  return Math.min(COLS, Math.max(MIN_W, Math.ceil((px + MARGIN_X) / (colW + MARGIN_X))))
 }
 
 export type Span = 4 | 6 | 12
@@ -63,6 +74,7 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   const [hidden, setHidden] = useState<string[]>([])
   const [sectionsMenuOpen, setSectionsMenuOpen] = useState(false)
   const [minHeights, setMinHeights] = useState<Record<string, number>>({})
+  const [minWidths, setMinWidths] = useState<Record<string, number>>({})
   const containerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const contentEls = useRef(new Map<string, HTMLDivElement>())
@@ -101,11 +113,13 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   // Also records each section's content-fit row count so it becomes a hard
   // resize floor (minH): the handle stops at content height, no snap-back.
   const fitHeights = useCallback(() => {
-    const needed = new Map<string, number>()
+    const neededH = new Map<string, number>()
+    const neededW = new Map<string, number>()
     contentEls.current.forEach((node, id) => {
-      needed.set(id, rowsForPx(node.scrollHeight))
+      neededH.set(id, rowsForPx(node.scrollHeight))
+      neededW.set(id, colsForPx(node.scrollWidth, containerW))
     })
-    setMinHeights((prev) => {
+    const merge = (prev: Record<string, number>, needed: Map<string, number>) => {
       let changed = false
       const next = { ...prev }
       needed.forEach((n, id) => {
@@ -115,20 +129,25 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
         }
       })
       return changed ? next : prev
-    })
+    }
+    setMinHeights((prev) => merge(prev, neededH))
+    setMinWidths((prev) => merge(prev, neededW))
     setLayout((prev) => {
       let changed = false
       const next = prev.map((l) => {
-        const n = needed.get(l.i)
-        if (n !== undefined && n > l.h) {
+        const nh = neededH.get(l.i)
+        const nw = neededW.get(l.i)
+        const h = nh !== undefined && nh > l.h ? nh : l.h
+        const w = nw !== undefined && nw > l.w ? nw : l.w
+        if (h !== l.h || w !== l.w) {
           changed = true
-          return { ...l, h: n }
+          return { ...l, h, w }
         }
         return l
       })
       return changed ? next : prev
     })
-  }, [])
+  }, [containerW])
 
   useEffect(() => {
     const ro = new ResizeObserver(() => fitHeights())
@@ -169,9 +188,16 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
         minW: MIN_W,
         minH: MIN_H,
       }
-    // Content-fit floor blocks shrinking below what the content needs.
-    const floor = Math.max(MIN_H, minHeights[s.id] ?? MIN_H)
-    return { ...base, minH: floor, h: Math.max(base.h, floor) }
+    // Content-fit floors block shrinking below what the content needs.
+    const floorH = Math.max(MIN_H, minHeights[s.id] ?? MIN_H)
+    const floorW = Math.min(COLS, Math.max(MIN_W, minWidths[s.id] ?? MIN_W))
+    return {
+      ...base,
+      minH: floorH,
+      minW: floorW,
+      h: Math.max(base.h, floorH),
+      w: Math.max(base.w, floorW),
+    }
   })
 
   const onLayoutChange = (current: RglItem[]) => {
