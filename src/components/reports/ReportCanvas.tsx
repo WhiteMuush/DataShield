@@ -197,12 +197,10 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
     // while still allowing manual grow. Width has no reliable intrinsic min
     // (content reflows), so it stays freely resizable down to MIN_W.
     const floorH = Math.max(MIN_H, minHeights[s.id] ?? MIN_H)
-    return {
-      ...base,
-      minH: floorH,
-      minW: MIN_W,
-      h: Math.max(base.h, floorH),
-    }
+    // h comes straight from layout state (fitHeights keeps it at the content
+    // floor); do not override it here, or the rendered h differs from stored h
+    // and RGL keeps echoing the difference back through onLayoutChange.
+    return { ...base, minH: floorH, minW: MIN_W }
   })
 
   const onLayoutChange = (current: RglItem[]) => {
