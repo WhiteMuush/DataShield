@@ -63,6 +63,8 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   const [hidden, setHidden] = useState<string[]>([])
   const [sectionsMenuOpen, setSectionsMenuOpen] = useState(false)
   const [minHeights, setMinHeights] = useState<Record<string, number>>({})
+  // Bumped to force a re-measure even when widths are unchanged (e.g. Reset).
+  const [measureNonce, setMeasureNonce] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const contentEls = useRef(new Map<string, HTMLDivElement>())
@@ -153,7 +155,7 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
   const hiddenSig = hidden.join(",")
   useEffect(() => {
     fitHeights()
-  }, [fitHeights, widthSig, containerW, hiddenSig, sections.length])
+  }, [fitHeights, widthSig, containerW, hiddenSig, sections.length, measureNonce])
 
   useEffect(() => {
     if (!sectionsMenuOpen) return
@@ -233,6 +235,11 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
     const l = buildDefaultLayout(sections)
     setLayout(l)
     setHidden([])
+    // Drop stale content-fit floors (they may have been measured at a different
+    // zoom/width) and force a fresh measure, otherwise default heights can be
+    // wrong and tiles overlap.
+    setMinHeights({})
+    setMeasureNonce((n) => n + 1)
     persist({ layout: l, hidden: [] })
   }
 
