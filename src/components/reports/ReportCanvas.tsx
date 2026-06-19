@@ -98,8 +98,12 @@ export function ReportCanvas({ sections }: { sections: ReportSectionEntry[] }) {
     // fitHeights effect. An unrounded value changes every render and feeds an
     // endless update loop (Maximum update depth exceeded).
     const ro = new ResizeObserver((entries) => {
-      const w = Math.round(entries[0].contentRect.width)
-      setContainerW((prev) => (prev === w ? prev : w))
+      // Floor (never round up): the grid is rendered at width=containerW, and a
+      // value 1px wider than the container overflows horizontally, toggling a
+      // scrollbar that shrinks the container, which feeds an endless loop.
+      const w = Math.floor(entries[0].contentRect.width)
+      // Ignore sub-2px wobble so a 1px layout ping-pong cannot drive a loop.
+      setContainerW((prev) => (Math.abs(prev - w) < 2 ? prev : w))
     })
     ro.observe(el)
     return () => ro.disconnect()
