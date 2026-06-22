@@ -70,22 +70,75 @@ check: ## Run the same gates CI enforces (lint, types, schema, build)
 	npx prisma validate
 	npm run build
 
-doctor: ## Diagnose Docker, database, Prisma, and env for troubleshooting
-	@echo "DataShield doctor"
-	@echo "-----------------"
-	@printf "node:           "; node -v 2>/dev/null || echo "MISSING (need Node 22)"
-	@printf ".env.local:     "; if [ -f .env.local ]; then echo "present"; else echo "MISSING (run 'make env')"; fi
-	@if [ -f .env.local ]; then \
-		grep -q '^AUTH_SECRET=change-me' .env.local && echo "  WARN: AUTH_SECRET is still the placeholder"; \
-		grep -q '^DIRECTORY_ENCRYPTION_KEY=change-me' .env.local && echo "  WARN: DIRECTORY_ENCRYPTION_KEY is still the placeholder (run 'make env' on a fresh file)"; \
-		true; \
-	fi
-	@printf "docker:         "; if command -v docker >/dev/null 2>&1; then docker --version; else echo "MISSING (install Docker)"; fi
-	@printf "docker daemon:  "; if docker info >/dev/null 2>&1; then echo "running"; else echo "NOT running (start Docker Desktop / enable WSL integration)"; fi
-	@printf "db container:   "; status=$$(docker inspect -f '{{.State.Health.Status}}' datashield-db 2>/dev/null); if [ -n "$$status" ]; then echo "$$status"; else echo "not found (run 'make db-up')"; fi
-	@printf "prisma client:  "; if [ -d node_modules/.prisma/client ]; then echo "generated"; else echo "MISSING (run 'make install' or 'npx prisma generate')"; fi
-	@echo "migrations (live DB check):"
-	@npx prisma migrate status 2>&1 | sed 's/^/  /' || true
+doctor: ## Full setup diagnosis: toolchain, env, Docker, database, Prisma
+	@ok=0; warn=0; bad=0; \
+	pass() { echo "  [OK]   $$1"; ok=$$((ok+1)); }; \
+	wrn()  { echo "  [WARN] $$1"; warn=$$((warn+1)); }; \
+	err()  { echo "  [FAIL] $$1"; bad=$$((bad+1)); }; \
+	getv() { grep -E "^$$1=" .env.local 2>/dev/null | head -1 | cut -d= -f2-; }; \
+	echo "DataShield doctor"; \
+	echo "================="; \
+	echo "Toolchain:"; \
+	nv=$$(node -v 2>/dev/null); \
+	if [ -z "$$nv" ]; then err "node: not found (need Node 22)"; \
+	elif [ "$${nv#v22.}" != "$$nv" ]; then pass "node $$nv"; \
+	else wrn "node $$nv (project targets Node 22)"; fi; \
+	if command -v npm >/dev/null 2>&1; then pass "npm $$(npm -v)"; else err "npm: not found"; fi; \
+	if command -v openssl >/dev/null 2>&1; then pass "openssl present (used by 'make env')"; else wrn "openssl: not found ('make env' cannot generate secrets)"; fi; \
+	echo "Environment (.env.local):"; \
+	if [ ! -f .env.local ]; then err ".env.local missing (run 'make env')"; \
+	else \
+		pass ".env.local present"; \
+		[ -n "$$(getv DATABASE_URL)" ] && pass "DATABASE_URL set" || err "DATABASE_URL empty"; \
+		as=$$(getv AUTH_SECRET); \
+		if [ -z "$$as" ]; then err "AUTH_SECRET empty"; \
+		elif [ "$${as#change-me}" != "$$as" ]; then err "AUTH_SECRET still the placeholder"; \
+		else pass "AUTH_SECRET set"; fi; \
+		ek=$$(getv DIRECTORY_ENCRYPTION_KEY); ekl=$$(printf %s "$$ek" | wc -c | tr -d ' '); \
+		if [ -z "$$ek" ]; then err "DIRECTORY_ENCRYPTION_KEY empty (app refuses directory configs)"; \
+		elif [ "$${ek#change-me}" != "$$ek" ]; then err "DIRECTORY_ENCRYPTION_KEY still the placeholder"; \
+		elif [ "$$ekl" -lt 32 ]; then err "DIRECTORY_ENCRYPTION_KEY too short ($$ekl chars, need >= 32)"; \
+		else pass "DIRECTORY_ENCRYPTION_KEY set ($$ekl chars)"; fi; \
+		[ -n "$$(getv AUTH_URL)" ] && pass "AUTH_URL set" || wrn "AUTH_URL empty (defaults to http://localhost:3000)"; \
+		[ -n "$$(getv CRON_SECRET)" ] && pass "CRON_SECRET set" || wrn "CRON_SECRET empty (scheduler endpoint /api/cron returns 503)"; \
+		[ -n "$$(getv HIBP_API_KEY)" ] && pass "HIBP_API_KEY set" || wrn "HIBP_API_KEY empty (no breach lookups unless a per-company key is stored)"; \
+		rk=$$(getv RESEND_API_KEY); ef=$$(getv EMAIL_FROM); \
+		if [ -n "$$rk" ] && [ -n "$$ef" ]; then pass "email configured (RESEND_API_KEY + EMAIL_FROM)"; \
+		elif [ -z "$$rk" ] && [ -z "$$ef" ]; then wrn "email disabled (RESEND_API_KEY + EMAIL_FROM unset)"; \
+		else wrn "email half-configured: set both RESEND_API_KEY and EMAIL_FROM or neither"; fi; \
+	fi; \
+	echo "Docker:"; \
+	if command -v docker >/dev/null 2>&1; then pass "docker $$(docker --version | awk '{print $$3}' | tr -d ',')"; \
+	else err "docker not found (needed for the local database)"; fi; \
+	if docker compose version >/dev/null 2>&1; then pass "docker compose available"; else wrn "docker compose not available"; fi; \
+	if docker info >/dev/null 2>&1; then pass "docker daemon running"; \
+	else err "docker daemon not running (start Docker Desktop / enable WSL integration)"; fi; \
+	st=$$(docker inspect -f '{{.State.Health.Status}}' datashield-db 2>/dev/null); \
+	if [ "$$st" = "healthy" ]; then pass "db container healthy"; \
+	elif [ -n "$$st" ]; then wrn "db container status: $$st"; \
+	else wrn "db container not found (run 'make db-up')"; fi; \
+	echo "Database connectivity:"; \
+	du=$$(getv DATABASE_URL); \
+	hp=$$(printf %s "$$du" | sed -E 's#^[a-z]+://([^@]*@)?([^/?]+).*#\2#'); \
+	host=$${hp%%:*}; port=$${hp##*:}; [ "$$port" = "$$host" ] && port=5432; \
+	if [ -z "$$host" ]; then wrn "could not parse host from DATABASE_URL"; \
+	elif command -v nc >/dev/null 2>&1; then \
+		if nc -z -w 2 "$$host" "$$port" >/dev/null 2>&1; then pass "TCP $$host:$$port reachable"; \
+		else err "TCP $$host:$$port not reachable (is the DB up?)"; fi; \
+	else wrn "nc not installed, skipping TCP probe ($$host:$$port)"; fi; \
+	echo "Prisma:"; \
+	if [ -d node_modules ]; then pass "node_modules installed"; else err "node_modules missing (run 'make install')"; fi; \
+	if [ -d node_modules/.prisma/client ]; then pass "prisma client generated"; else err "prisma client missing (run 'npx prisma generate')"; fi; \
+	if npx prisma validate >/dev/null 2>&1; then pass "schema valid (prisma validate)"; else err "schema invalid (run 'npx prisma validate' for details)"; fi; \
+	ms=$$(npx prisma migrate status 2>&1); \
+	if printf %s "$$ms" | grep -q "up to date"; then pass "migrations up to date"; \
+	elif printf %s "$$ms" | grep -q "have not yet been applied"; then wrn "pending migrations (run 'make migrate')"; \
+	elif printf %s "$$ms" | grep -qE "P1001|reach|unreachable"; then err "database unreachable for migrate status"; \
+	else wrn "migrate status inconclusive (run 'make migrate' / 'npx prisma migrate status')"; fi; \
+	echo "================="; \
+	echo "Summary: $$ok OK, $$warn warning(s), $$bad failure(s)"; \
+	if [ "$$bad" -gt 0 ]; then echo "Result: NOT ready, fix the failures above."; else echo "Result: ready."; fi; \
+	[ "$$bad" -eq 0 ]
 
 clean: ## Stop the DB and remove node_modules and the Next.js build cache
 	npm run db:down
