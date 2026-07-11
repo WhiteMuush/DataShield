@@ -43,6 +43,10 @@ db-init: ## Start DB, apply migrations, seed demo data (Docker required)
 backup: ## Dump the local database to backups/ (pg_dump)
 	$(N) npm run db:backup
 
+.PHONY: restore
+restore: ## Restore a dump (destructive): make restore FILE=backups/<file>.dump
+	$(N) npm run db:restore -- $(FILE)
+
 .PHONY: migrate
 migrate: ## Apply pending Prisma migrations
 	$(N) npm run db:migrate
