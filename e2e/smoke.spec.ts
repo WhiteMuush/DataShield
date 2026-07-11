@@ -1,19 +1,22 @@
-import { test, expect, type Page } from "@playwright/test"
+import { test, expect } from "@playwright/test"
 
-const cspViolations: string[] = []
+let cspViolations: string[]
 
-function watchConsole(page: Page) {
+test.beforeEach(({ page }) => {
+  cspViolations = []
   page.on("console", (msg) => {
     const text = msg.text()
     if (text.includes("Content Security Policy") || text.includes("Refused to")) {
       cspViolations.push(text)
     }
   })
-}
+})
+
+test.afterEach(() => {
+  expect(cspViolations).toEqual([])
+})
 
 test("admin signs in, sees dashboard and alerts", async ({ page }) => {
-  watchConsole(page)
-
   await page.goto("/login")
   await page.getByLabel("Email").fill("admin@datashield.local")
   await page.getByLabel("Password").fill("ChangeMe123!")
@@ -24,6 +27,4 @@ test("admin signs in, sees dashboard and alerts", async ({ page }) => {
 
   await page.goto("/alerts")
   await expect(page.getByRole("main")).toBeVisible()
-
-  expect(cspViolations).toEqual([])
 })
