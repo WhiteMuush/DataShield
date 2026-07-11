@@ -5,7 +5,8 @@ export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   callbacks: {
     authorized({ auth, request }) {
-      if (request.nextUrl.pathname.startsWith("/login")) return true
+      const path = request.nextUrl.pathname
+      if (path === "/login" || path.startsWith("/login/")) return true
       return !!auth?.user
     },
     jwt({ token, user }) {
