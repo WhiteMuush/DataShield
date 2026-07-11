@@ -45,7 +45,7 @@ backup: ## Dump the local database to backups/ (pg_dump)
 
 .PHONY: restore
 restore: ## Restore a dump (destructive): make restore FILE=backups/<file>.dump
-	$(N) npm run db:restore -- $(FILE)
+	$(N) npm run db:restore -- "$(FILE)"
 
 .PHONY: migrate
 migrate: ## Apply pending Prisma migrations

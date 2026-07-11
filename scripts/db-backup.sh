@@ -15,6 +15,7 @@ mkdir -p backups
 out="backups/datashield-$(date +%Y%m%d-%H%M%S).dump"
 
 echo "[db-backup] dumping to $out"
-docker compose exec -T db pg_dump -Fc -U "${POSTGRES_USER:-user}" "${POSTGRES_DB:-datashield}" > "$out"
+docker compose exec -T db pg_dump -Fc -U "${POSTGRES_USER:-user}" "${POSTGRES_DB:-datashield}" > "$out.tmp"
+mv "$out.tmp" "$out"
 
 echo "[db-backup] done: $out ($(du -h "$out" | cut -f1))"
