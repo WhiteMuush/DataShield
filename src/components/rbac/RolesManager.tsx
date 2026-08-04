@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { PermissionEditor } from "./PermissionEditor"
 import { StepUpDialog } from "./StepUpDialog"
+import { SkeletonRows } from "@/components/ui/Skeleton"
 
 type Role = {
   id: string
@@ -27,10 +28,18 @@ export function RolesManager() {
   const [name, setName] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [stepUpRetry, setStepUpRetry] = useState<null | (() => void)>(null)
+  // Only ever cleared, never set back to true: the skeleton covers the first
+  // paint, while the reloads that follow a mutation keep the list on screen
+  // instead of flashing placeholders over data the user is already reading.
+  const [loading, setLoading] = useState(true)
 
   async function load() {
-    const res = await fetch("/api/roles")
-    if (res.ok) setRoles((await res.json()).roles)
+    try {
+      const res = await fetch("/api/roles")
+      if (res.ok) setRoles((await res.json()).roles)
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => {
     void load()
@@ -126,6 +135,9 @@ export function RolesManager() {
         </button>
       </div>
 
+      {loading ? (
+        <SkeletonRows rows={5} />
+      ) : (
       <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
         {pageRoles.map((r) => (
           <li key={r.id} className="flex items-center justify-between px-3 py-2 text-sm">
@@ -149,10 +161,13 @@ export function RolesManager() {
           </li>
         ))}
       </ul>
+      )}
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          {filtered.length} role(s), page {page + 1} of {Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}
+          {loading
+            ? "Loading roles..."
+            : `${filtered.length} role(s), page ${page + 1} of ${Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}`}
         </span>
         <div className="flex gap-2">
           <button disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="disabled:opacity-40">
