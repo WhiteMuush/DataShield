@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react"
 
 type Snapshot = { name?: string; permissions?: string[]; roleId?: string | null }
 
@@ -46,28 +46,56 @@ function describeTarget(e: Entry, names: Record<string, string>): string {
 }
 
 // What actually changed, in the terms the reader cares about: which permissions
-// moved, or which role a person went to. Raw JSON would be unreadable here.
-function describeChange(e: Entry, names: Record<string, string>): string {
-  if (e.action === "user.role.assign") {
-    const from = e.before?.roleId ? (names[e.before.roleId] ?? "a role") : "no access"
-    const to = e.after?.roleId ? (names[e.after.roleId] ?? "a role") : "no access"
-    return `${from} -> ${to}`
+// moved, or which role a person went to. Raw JSON would be unreadable here, and
+// so is a plain "a -> b" string: only the destination matters, so the previous
+// value steps back rather than sharing the weight.
+function Change({ entry, names }: { entry: Entry; names: Record<string, string> }) {
+  if (entry.action === "user.role.assign") {
+    const from = entry.before?.roleId ? (names[entry.before.roleId] ?? "a role") : "No access"
+    const to = entry.after?.roleId ? (names[entry.after.roleId] ?? "a role") : "No access"
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="text-muted-foreground/70">{from}</span>
+        <ArrowRight aria-hidden className="size-3 shrink-0 text-muted-foreground/50" />
+        <span className="text-foreground">{to}</span>
+      </span>
+    )
   }
 
-  const before = e.before?.permissions
-  const after = e.after?.permissions
+  const before = entry.before?.permissions
+  const after = entry.after?.permissions
   if (before && after) {
     const added = after.filter((p) => !before.includes(p))
     const removed = before.filter((p) => !after.includes(p))
-    const parts = [...added.map((p) => `+${p}`), ...removed.map((p) => `-${p}`)]
-    if (parts.length === 0) return "no permission change"
-    return parts.join(", ")
+    if (added.length === 0 && removed.length === 0) {
+      return <span className="text-muted-foreground/70">No permission change</span>
+    }
+    return (
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {added.map((p) => (
+          <span key={`+${p}`} className="text-foreground">
+            + {p}
+          </span>
+        ))}
+        {removed.map((p) => (
+          <span key={`-${p}`} className="text-muted-foreground/70 line-through">
+            {p}
+          </span>
+        ))}
+      </span>
+    )
   }
 
   // Create and delete carry a single snapshot, so there is nothing to diff.
   const list = after ?? before
-  if (list) return `${list.length} permission${list.length === 1 ? "" : "s"}`
-  return "-"
+  if (list) {
+    return (
+      <span className="text-muted-foreground">
+        {list.length} permission{list.length === 1 ? "" : "s"}
+      </span>
+    )
+  }
+  return <span className="text-muted-foreground/70">&mdash;</span>
 }
 
 export function AuditTrail() {
@@ -125,7 +153,9 @@ export function AuditTrail() {
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {describeTarget(e, names)}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{describeChange(e, names)}</td>
+                  <td className="px-4 py-3">
+                    <Change entry={e} names={names} />
+                  </td>
                 </tr>
               ))
             )}
