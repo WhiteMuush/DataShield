@@ -20,7 +20,7 @@ async function login(page: import("@playwright/test").Page, u: { email: string; 
 test("a viewer can view roles but not create one", async ({ page }) => {
   await login(page, MEMBER)
   await page.goto("/access")
-  await expect(page.getByRole("heading", { name: "Access management" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Access" })).toBeVisible()
 
   // Direct API create must be forbidden for a viewer.
   const res = await page.request.post("/api/roles", {

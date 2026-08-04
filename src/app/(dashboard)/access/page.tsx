@@ -5,6 +5,7 @@ import { getUserPermissions, authorize } from "@/lib/rbac/authorize"
 import { RolesManager } from "@/components/rbac/RolesManager"
 import { UserRoleAssignment } from "@/components/rbac/UserRoleAssignment"
 import { AuditTrail } from "@/components/rbac/AuditTrail"
+import { AccessTabs } from "@/components/rbac/AccessTabs"
 
 export default async function AccessPage() {
   const session = await getSession()
@@ -24,28 +25,22 @@ export default async function AccessPage() {
   // longer be closed. Same shape as every other dashboard page.
   return (
     <div className="h-full overflow-y-auto p-6">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Access management</h1>
-          <p className="text-sm text-muted-foreground">Roles, assignments, and the audit trail.</p>
-        </div>
-        <section className="space-y-2">
-          <h2 className="text-sm font-medium text-foreground">Roles</h2>
-          <RolesManager />
-        </section>
-        {canManageUsers && (
-          <section className="space-y-2">
-            <h2 className="text-sm font-medium text-foreground">People</h2>
-            <UserRoleAssignment />
-          </section>
-        )}
-        {canReadAudit && (
-          <section className="space-y-2">
-            <h2 className="text-sm font-medium text-foreground">Audit trail</h2>
-            <AuditTrail />
-          </section>
-        )}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-foreground">Access</h2>
+        <p className="text-sm text-muted-foreground">
+          Who can do what in this workspace, and a record of every change
+        </p>
       </div>
+
+      <AccessTabs
+        tabs={[
+          { id: "roles", label: "Roles", panel: <RolesManager /> },
+          ...(canManageUsers
+            ? [{ id: "people", label: "People", panel: <UserRoleAssignment /> }]
+            : []),
+          ...(canReadAudit ? [{ id: "audit", label: "Audit trail", panel: <AuditTrail /> }] : []),
+        ]}
+      />
     </div>
   )
 }
