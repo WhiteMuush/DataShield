@@ -24,7 +24,7 @@ export default async function AccessPage() {
   // longer be closed. Same shape as every other dashboard page.
   return (
     <div className="h-full overflow-y-auto p-6">
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Access management</h1>
           <p className="text-sm text-muted-foreground">Roles, assignments, and the audit trail.</p>
