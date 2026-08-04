@@ -2,18 +2,27 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, ShieldCheck } from "lucide-react"
 import { signIn, twoFactor } from "@/lib/auth/client"
 import { Button } from "@/components/ui/button"
 
-// Spinner plus label. The icon is aria-hidden so the button keeps a stable
-// accessible name while it spins.
-function Pending({ label }: { label: string }) {
+// Covers the gap between "credentials accepted" and "dashboard painted". That
+// stretch is the slowest part of signing in and used to show nothing at all:
+// the button had already snapped back to its idle label. Rendered only once
+// authentication has actually succeeded, never during the check itself.
+function EnteringWorkspace() {
   return (
-    <span className="inline-flex items-center gap-2">
-      <Loader2 aria-hidden className="size-4 animate-spin" />
-      {label}
-    </span>
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background"
+    >
+      <ShieldCheck aria-hidden className="size-10 animate-pulse text-primary" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 aria-hidden className="size-4 animate-spin" />
+        Opening your workspace...
+      </div>
+    </div>
   )
 }
 
@@ -24,10 +33,18 @@ export default function LoginPage() {
   // own label so its accessible name never collides with "Sign in".
   const [pending, setPending] = useState<null | "password" | "passkey" | "totp" | "otp">(null)
   const loading = pending !== null
+  const [entering, setEntering] = useState(false)
   const [needsTotp, setNeedsTotp] = useState(false)
   const [emailMode, setEmailMode] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
   const router = useRouter()
+
+  // Every successful path funnels through here so the transition screen is the
+  // single thing standing between authentication and the dashboard.
+  function enterWorkspace() {
+    setEntering(true)
+    router.push("/dashboard")
+  }
 
   function chooseEmail() {
     setError(null)
@@ -52,10 +69,7 @@ export default function LoginPage() {
         setPending(null)
         return
       }
-      // Deliberately stays pending: the spinner has to survive until the
-      // dashboard paints, otherwise the button snaps back to its idle label
-      // while the navigation is still in flight.
-      router.push("/dashboard")
+      enterWorkspace()
     } catch {
       setError("Passkey sign-in failed or was cancelled")
       setPending(null)
@@ -100,7 +114,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/dashboard")
+    enterWorkspace()
   }
 
   async function handlePassword(e: React.FormEvent<HTMLFormElement>) {
@@ -127,7 +141,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/dashboard")
+    enterWorkspace()
   }
 
   async function handleTotp(e: React.FormEvent<HTMLFormElement>) {
@@ -146,8 +160,10 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/dashboard")
+    enterWorkspace()
   }
+
+  if (entering) return <EnteringWorkspace />
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -195,7 +211,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" disabled={loading} className="w-full" size="lg">
-              {loading ? <Pending label="Verifying..." /> : "Verify"}
+              {loading ? "Verifying..." : "Verify"}
             </Button>
 
             <button
@@ -223,7 +239,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
             >
-              {loading ? <Pending label="Sending..." /> : "Email me a code"}
+              {loading ? "Sending..." : "Email me a code"}
             </Button>
 
             <button
@@ -265,7 +281,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
             >
-              {loading ? <Pending label="Verifying..." /> : "Verify"}
+              {loading ? "Verifying..." : "Verify"}
             </Button>
 
             <button
@@ -324,7 +340,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
             >
-              {pending === "password" ? <Pending label="Signing in..." /> : "Sign in"}
+              {pending === "password" ? "Signing in..." : "Sign in"}
             </Button>
 
             <div className="flex items-center gap-3">
@@ -341,7 +357,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
             >
-              {pending === "passkey" ? <Pending label="Signing in..." /> : "Sign in with a passkey"}
+              Sign in with a passkey
             </Button>
           </form>
         )}
