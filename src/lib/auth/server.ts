@@ -123,7 +123,12 @@ export const auth = betterAuth({
   // e2e only: the serial 2FA suite makes several sign-ins inside Better Auth's
   // 3-per-10s window, which would 429-flake. Gated on E2E=1 *and* a loopback
   // base URL, so it can never arm in production even if E2E leaks there.
-  ...(rateLimitDisabled ? { rateLimit: { enabled: false } } : {}),
+  // Persisted rather than in-memory, so the sign-in window is shared by every
+  // instance and survives a deploy. An in-process counter divides the real
+  // limit by the number of nodes and resets whenever one restarts.
+  ...(rateLimitDisabled
+    ? { rateLimit: { enabled: false } }
+    : { rateLimit: { enabled: true, storage: "database" as const, modelName: "rateLimit" } }),
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,
