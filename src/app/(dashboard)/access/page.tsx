@@ -12,7 +12,10 @@ export default async function AccessPage() {
   const perms = await getUserPermissions(prisma, session.user.roleId ?? null)
   if (!authorize(perms, "roles:read")) redirect("/dashboard")
 
-  const canManageUsers = authorize(perms, "users:read")
+  // users:manage, not users:read: the section exists only to reassign roles, and
+  // READ_ONLY grants every ":read" permission, so gating on read would show a
+  // Viewer a dropdown the server refuses on every change.
+  const canManageUsers = authorize(perms, "users:manage")
   const canReadAudit = authorize(perms, "audit:read")
 
   return (
