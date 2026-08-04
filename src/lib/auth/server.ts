@@ -132,8 +132,16 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,
+    // 12 rounds, matching every seed script. This was the only place still on
+    // 10, and it is the only one that hashes a real user's password. Existing
+    // hashes keep verifying: bcrypt stores its cost inside the hash.
+    // The default minimum is 8, which is thin for a product whose job is
+    // finding exposed credentials. The cap keeps bcrypt's 72-byte truncation
+    // from silently ignoring the tail of a very long passphrase.
+    minPasswordLength: 12,
+    maxPasswordLength: 72,
     password: {
-      hash: (password) => bcrypt.hash(password, 10),
+      hash: (password) => bcrypt.hash(password, 12),
       verify: ({ hash, password }) => bcrypt.compare(password, hash),
     },
   },
