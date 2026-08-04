@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { StepUpDialog } from "./StepUpDialog"
-import { SkeletonRows } from "@/components/ui/Skeleton"
 
 type UserRow = { id: string; email: string; name: string; roleId: string | null; roleName: string | null }
 type RoleRow = { id: string; name: string; isAssignable: boolean }
@@ -13,18 +12,11 @@ export function UserRoleAssignment() {
   const [query, setQuery] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [stepUpRetry, setStepUpRetry] = useState<null | (() => void)>(null)
-  // Cleared once and never restored, so reassigning a role refreshes the list
-  // in place instead of blanking the row the user just acted on.
-  const [loading, setLoading] = useState(true)
 
   async function load() {
-    try {
-      const [u, r] = await Promise.all([fetch("/api/users"), fetch("/api/roles")])
-      if (u.ok) setUsers((await u.json()).users)
-      if (r.ok) setRoles((await r.json()).roles)
-    } finally {
-      setLoading(false)
-    }
+    const [u, r] = await Promise.all([fetch("/api/users"), fetch("/api/roles")])
+    if (u.ok) setUsers((await u.json()).users)
+    if (r.ok) setRoles((await r.json()).roles)
   }
   useEffect(() => {
     void load()
@@ -72,9 +64,6 @@ export function UserRoleAssignment() {
         className="rounded-lg border border-input bg-card px-3 py-2 text-sm"
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {loading ? (
-        <SkeletonRows rows={4} />
-      ) : (
       <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
         {filtered.map((u) => (
           <li key={u.id} className="flex items-center justify-between px-3 py-2 text-sm">
@@ -96,7 +85,6 @@ export function UserRoleAssignment() {
           </li>
         ))}
       </ul>
-      )}
       <StepUpDialog
         open={stepUpRetry !== null}
         onVerified={() => stepUpRetry?.()}
