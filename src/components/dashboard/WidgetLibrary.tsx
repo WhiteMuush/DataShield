@@ -175,7 +175,7 @@ export function WidgetLibrary({
                             {widget.defaultTitle}
                           </p>
                           <p className="text-[10px] text-muted-foreground">
-                            {widget.defaultSize.w}×{widget.defaultSize.h} cells
+                            {widget.defaultSize.w}x{widget.defaultSize.h} cells
                           </p>
                         </div>
 
