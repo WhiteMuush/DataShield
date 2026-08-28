@@ -53,6 +53,16 @@ const GATED_PAGES = new Set(
     .map(([path]) => path)
 )
 
+// The app resolves a page's permission by longest matching prefix
+// (requiredPermissionForPage in page-permissions.ts), so a gated section's
+// rule governs every page below it, not just the section path itself. A
+// link to a detail page, /employees/<id> and the like, is the realistic
+// case: it matches no entry in GATED_PAGES by equality, so exact-equality
+// alone would let it slip past this file unseen.
+function isGatedPage(path: string): boolean {
+  return GATED_PAGES.has(path) || [...GATED_PAGES].some((p) => path.startsWith(`${p}/`))
+}
+
 const GATED_API = new Map(
   Object.entries(ROUTE_PERMISSIONS)
     .filter(([, permission]) => permission !== "PUBLIC" && permission !== "AUTH_ONLY")
@@ -76,7 +86,7 @@ describe("link -> permission coverage", () => {
     const offenders: string[] = []
     for (const file of tsxFiles(SRC)) {
       const source = readFileSync(file, "utf8")
-      if (!linkedPaths(source).some((path) => GATED_PAGES.has(path))) continue
+      if (!linkedPaths(source).some((path) => isGatedPage(path))) continue
       if (!source.includes("visible.includes(")) offenders.push(relative(SRC, file))
     }
     expect(
