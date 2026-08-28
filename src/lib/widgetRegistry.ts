@@ -11,7 +11,7 @@ export type WidgetDef = {
 }
 
 const WIDGETS: WidgetDef[] = [
-  // ── Existing widgets ────────────────────────────────────────────
+  // --- Existing widgets
   {
     type: "stats-row",
     defaultTitle: "Key Metrics",
@@ -76,7 +76,7 @@ const WIDGETS: WidgetDef[] = [
     minSize: { w: 3, h: 4 },
     category: "employees",
   },
-  // ── New widgets ─────────────────────────────────────────────────
+  // --- New widgets
   {
     type: "risk-gauge",
     defaultTitle: "Risk Score",
