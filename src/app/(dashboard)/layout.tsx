@@ -68,7 +68,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <RoutePrefetcher />
+      <RoutePrefetcher visible={visible} />
       <DashboardShell openAlerts={openAlerts} visible={visible}>
         {may(requiredPermissionForPage(pathname)) ? children : <NoAccess />}
       </DashboardShell>
