@@ -488,7 +488,7 @@ export function DashboardCanvas({
               {editing && (
                 <>
                   <p className="text-xs text-muted-foreground">
-                    Drag · Resize · Rename
+                    Drag - Resize - Rename
                   </p>
                   <Link
                     href="/dashboard/widgets"

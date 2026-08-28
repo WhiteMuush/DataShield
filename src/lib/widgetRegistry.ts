@@ -31,7 +31,7 @@ const WIDGETS: WidgetDef[] = [
   {
     type: "data-type-breakdown",
     defaultTitle: "Exposed Data Types",
-    description: "Bar chart of compromised data categories (passwords, emails, SSN…)",
+    description: "Bar chart of compromised data categories (passwords, emails, SSN...)",
     defaultSize: { w: 4, h: 6 },
     minSize: { w: 3, h: 4 },
     category: "breaches",
@@ -80,7 +80,7 @@ const WIDGETS: WidgetDef[] = [
   {
     type: "risk-gauge",
     defaultTitle: "Risk Score",
-    description: "Semi-circle gauge showing the company's overall security risk score (0–100)",
+    description: "Semi-circle gauge showing the company's overall security risk score (0-100)",
     defaultSize: { w: 3, h: 5 },
     minSize: { w: 2, h: 4 },
     category: "overview",
