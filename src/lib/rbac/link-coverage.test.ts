@@ -25,24 +25,24 @@ const API_LINK_PERMISSIONS: Record<string, string> = {
   "components/register/ExposureRegister.tsx": "register:evidence",
 }
 
-// Any quoted or backticked literal that starts with a slash.
-const LITERAL = /["'`](\/[^"'`]*)["'`]/g
-
 // "${...}" in a template literal and "[param]" in a route key both stand for
 // one variable segment. Normalising both is what lets them compare.
 function normalise(path: string): string {
   return path.replace(/\$\{[^}]*\}/g, "*").replace(/\[[^\]]*\]/g, "*")
 }
 
-// Only literals on a line that mentions href count. That excludes redirect()
-// and router.push(), which are not affordances the reader can decline, and it
-// still catches a path held in an object field rather than an attribute, which
-// is how SetupChecklist writes its three.
+// A path counts when it appears as a literal within a short window after an
+// `href`, which is what makes it something the reader can click. The window
+// spans newlines, so an attribute Prettier wrapped onto its own line is
+// still seen. A fetch() to the same route is deliberately out of scope: it
+// is not an affordance, the server refuses it on its own, and there is no
+// button to withdraw.
+const HREF_LITERAL = /href[\s\S]{0,80}?["'`](\/[^"'`\s]*)["'`]/g
+
 function linkedPaths(source: string): string[] {
   const found: string[] = []
-  for (const line of source.split("\n")) {
-    if (!line.includes("href")) continue
-    for (const match of line.matchAll(LITERAL)) found.push(match[1].split(/[?#]/)[0])
+  for (const match of source.matchAll(HREF_LITERAL)) {
+    found.push(match[1].split(/[?#]/)[0])
   }
   return found
 }
