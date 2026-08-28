@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
-import { getUserPermissions, authorize } from "@/lib/rbac/authorize"
+import { authorize } from "@/lib/rbac/authorize"
+import { permissionsForRole } from "@/lib/rbac/session-permissions"
 import { visiblePages } from "@/lib/rbac/page-permissions"
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist"
 import { SecuritySettings } from "@/components/settings/SecuritySettings"
@@ -12,7 +13,7 @@ import { SecuritySettings } from "@/components/settings/SecuritySettings"
 export default async function SetupPage() {
   const session = await getSession()
   const companyId = session!.user.companyId
-  const perms = await getUserPermissions(prisma, session!.user.roleId ?? null)
+  const perms = await permissionsForRole(session!.user.roleId ?? null)
   const isAdmin = authorize(perms, "users:manage")
   const visible = visiblePages(perms)
 
