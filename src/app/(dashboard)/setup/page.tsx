@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
-import { authorize } from "@/lib/rbac/authorize"
 import { permissionsForRole } from "@/lib/rbac/session-permissions"
 import { visiblePages } from "@/lib/rbac/page-permissions"
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist"
@@ -14,7 +13,6 @@ export default async function SetupPage() {
   const session = await getSession()
   const companyId = session!.user.companyId
   const perms = await permissionsForRole(session!.user.roleId ?? null)
-  const isAdmin = authorize(perms, "users:manage")
   const visible = visiblePages(perms)
 
   const [employeeCount, apiKeyCount] = await Promise.all([
@@ -30,7 +28,6 @@ export default async function SetupPage() {
     <SetupChecklist
       hasEmployees={employeeCount > 0}
       hasApiKey={apiKeyCount > 0}
-      isAdmin={isAdmin}
       visible={visible}
     >
       <SecuritySettings />
